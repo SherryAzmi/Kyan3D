@@ -28,6 +28,7 @@ public static class BridgePuzzleBuilder
     static Material mSand, mSandDark, mCliff,mStone, mStoneLit, mDeadWood, mDesertWater, mDesertDune;
     static Material mGrass, mDirt, mBark, mLeaf, mLeafDark, mRoot, mForestWater, mGlowCyan, mGlowPink;
     static Material mAbyss, mSeed, mFragment, mRipple, mSocketDormant, mSocketAwake, mPresent, mFuture, mBarBg, mBarFill;
+    static Material mBeamGold, mBeamCyan, mPetal, mFlowerCenter;
 
     [MenuItem("Tools/Kyan/Build Bridge Puzzle")]
     static void BuildFromMenu()
@@ -42,7 +43,8 @@ public static class BridgePuzzleBuilder
     public static void Build()
     {
         var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
-        foreach (var n in new[] { "--- ENVIRONMENT ---", "--- DESERT (Present) ---", "--- FOREST (Future) ---", "PuzzleUI", "BridgePuzzle" })
+        foreach (var n in new[] { "--- ENVIRONMENT ---", "--- DESERT (Present) ---", "--- FOREST (Future) ---", "PuzzleUI", "BridgePuzzle",
+                                  "FragmentCutscene", "CinematicUI", "Cinematic Camera" })
         {
             var g = GameObject.Find(n);
             if (g) Object.DestroyImmediate(g);
@@ -139,10 +141,21 @@ public static class BridgePuzzleBuilder
         Box("Altar (forest)", forest, new Vector3(PathX, 0.5f, 15.5f), new Vector3(1.3f, 1f, 1.3f), mStone, true);
         Sph("Glow Bloom", forest, new Vector3(PathX, 1.15f, 15.5f), Vector3.one * 0.35f, mGlowPink);
 
+        // ---------- guidance beams ----------
+        var desertBeacon = Beacon(desert, "Guide Beam (desert)", mBeamGold, new Color(1f, 0.85f, 0.5f));
+        var forestBeacon = Beacon(forest, "Guide Beam (forest)", mBeamCyan, new Color(0.55f, 1f, 0.9f));
+
+        // ---------- flower that grows when the fragment is taken ----------
+        var flower = BuildFlower(desert, new Vector3(PathX + 1.5f, 0f, 14.2f), out var petals, out var flowerLight);
+
         // ---------- puzzle manager + HUD ----------
         var hud = BuildHUD();
         var puzzle = new GameObject("BridgePuzzle").AddComponent<BridgePuzzle>();
         puzzle.hud = hud;
+        puzzle.desertRiver = riverD;
+        puzzle.fragment = frag.GetComponent<MirrorFragment>();
+        puzzle.desertBeacon = desertBeacon;
+        puzzle.forestBeacon = forestBeacon;
         puzzle.mounds = mounds;
         puzzle.memorySeed = seed;
         puzzle.desertBridgeStones = stones;
@@ -153,8 +166,10 @@ public static class BridgePuzzleBuilder
         puzzle.forestBridgeWalkway = forestWalk;
 
         // ---------- players, cameras, light ----------
-        SetupPlayer(new[] { "Present_P1", "LightSoul_P1" }, "Present_P1", Vector3.zero, mPresent, hud, 0, "□ / E", "R2 / F", false);
-        SetupPlayer(new[] { "Future_P2", "VoidSoul_P2" }, "Future_P2", ForestOffset, mFuture, hud, 1, "□ / R-Shift", "R2 / R-Ctrl", true);
+        var presentGo = SetupPlayer(new[] { "Present_P1", "LightSoul_P1" }, "Present_P1", Vector3.zero, mPresent, hud, 0, "□ / E", "R2 / F", false);
+        var futureGo = SetupPlayer(new[] { "Future_P2", "VoidSoul_P2" }, "Future_P2", ForestOffset, mFuture, hud, 1, "□ / R-Shift", "R2 / R-Ctrl", true);
+        if (presentGo) puzzle.present = presentGo.transform;
+        if (futureGo) puzzle.future = futureGo.transform;
         SetupCamera("Camera_Light_Left", new Color(0.8f, 0.76f, 0.68f));
         SetupCamera("Camera_Void_Right", new Color(0.55f, 0.78f, 0.88f));
 
@@ -168,8 +183,13 @@ public static class BridgePuzzleBuilder
         }
         RenderSettings.fog = false;
 
+        // ---------- fragment cutscene (flower + note) ----------
+        puzzle.fragmentCutscene = BuildFragmentCutscene(flower, petals, flowerLight, presentGo,
+                                                        sun ? sun.GetComponent<Light>() : null, hud);
+
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
+        EnsurePuzzle2Placeholder();
         AssetDatabase.SaveAssets();
         Debug.Log("[BridgePuzzleBuilder] Desert + forest built with the Broken Bridge puzzle.");
     }
@@ -336,12 +356,12 @@ public static class BridgePuzzleBuilder
 
     // ================================================================== players / cameras / HUD
 
-    static void SetupPlayer(string[] names, string newName, Vector3 worldOrigin, Material mat, PuzzleHUD hud,
-                            int side, string interactKey, string powerKey, bool glow)
+    static GameObject SetupPlayer(string[] names, string newName, Vector3 worldOrigin, Material mat, PuzzleHUD hud,
+                                  int side, string interactKey, string powerKey, bool glow)
     {
         GameObject p = null;
         foreach (var n in names) { p = GameObject.Find(n); if (p) break; }
-        if (!p) { Debug.LogError($"[BridgePuzzleBuilder] Player '{names[0]}' not found. Run Tools > Kyan > Build Split Camera Rig first."); return; }
+        if (!p) { Debug.LogError($"[BridgePuzzleBuilder] Player '{names[0]}' not found. Run Tools > Kyan > Build Split Camera Rig first."); return null; }
 
         p.name = newName;
         var cc = p.GetComponent<CharacterController>();
@@ -378,6 +398,173 @@ public static class BridgePuzzleBuilder
         if (glow && !aura) AddLight(p.transform, new Vector3(0f, 1.3f, 0f), new Color(1f, 0.8f, 0.5f), 1.5f, 4f).name = "Aura";
         if (!glow && aura) Object.DestroyImmediate(aura.gameObject);
         EditorUtility.SetDirty(p);
+        return p;
+    }
+
+    // ================================================================== guidance, flower, cutscene, Puzzle 2
+
+    static GuideBeacon Beacon(Transform world, string name, Material beamMat, Color lightColor)
+    {
+        var root = Child(world, name);
+        var beam = Cyl("Beam", root, new Vector3(0f, 12f, 0f), new Vector3(0.7f, 12f, 0.7f), beamMat);
+        beam.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
+        var gb = root.gameObject.AddComponent<GuideBeacon>();
+        gb.beam = beam.GetComponent<Renderer>();
+        gb.glow = AddLight(root, new Vector3(0f, 1.2f, 0f), lightColor, 0f, 6f);
+        return gb;
+    }
+
+    static Transform BuildFlower(Transform world, Vector3 pos, out Transform petals, out Light light)
+    {
+        var root = Child(world, "Desert Flower");
+        root.localPosition = pos;
+        Cyl("Stem", root, new Vector3(0f, 0.36f, 0f), new Vector3(0.05f, 0.36f, 0.05f), mLeafDark);
+        var leafL = Sph("Leaf", root, new Vector3(-0.12f, 0.24f, 0f), new Vector3(0.24f, 0.05f, 0.1f), mLeaf);
+        leafL.transform.localRotation = Quaternion.Euler(0f, 0f, 25f);
+        var leafR = Sph("Leaf", root, new Vector3(0.12f, 0.34f, 0f), new Vector3(0.24f, 0.05f, 0.1f), mLeaf);
+        leafR.transform.localRotation = Quaternion.Euler(0f, 0f, -25f);
+
+        var head = Child(root, "Head");
+        head.localPosition = new Vector3(0f, 0.74f, 0f);
+        head.localRotation = Quaternion.Euler(-20f, 0f, 0f);
+        Sph("Center", head, Vector3.zero, Vector3.one * 0.12f, mFlowerCenter);
+        petals = Child(head, "Petals");
+        for (int i = 0; i < 6; i++)
+        {
+            var pivot = Child(petals, "Petal Pivot");
+            pivot.localRotation = Quaternion.Euler(0f, i * 60f, 0f);
+            var petal = Sph("Petal", pivot, new Vector3(0f, 0f, 0.13f), new Vector3(0.12f, 0.035f, 0.2f), mPetal);
+            petal.transform.localRotation = Quaternion.Euler(-12f, 0f, 0f);
+        }
+        light = AddLight(root, new Vector3(0f, 0.9f, 0.3f), new Color(1f, 0.8f, 0.6f), 0f, 5f);
+        return root;
+    }
+
+    static FragmentCutscene BuildFragmentCutscene(Transform flower, Transform petals, Light flowerLight,
+                                                  GameObject present, Light sun, PuzzleHUD hud)
+    {
+        var camGo = new GameObject("Cinematic Camera");
+        var cam = camGo.AddComponent<Camera>();
+        cam.depth = 10f; // drawn over both split-screen cameras
+        cam.clearFlags = CameraClearFlags.SolidColor;
+        cam.backgroundColor = new Color(0.86f, 0.8f, 0.68f);
+        cam.fieldOfView = 45f;
+        cam.nearClipPlane = 0.1f;
+        cam.farClipPlane = 120f;
+        camGo.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+        cam.enabled = false;
+
+        var canvasGo = new GameObject("CinematicUI");
+        var canvas = canvasGo.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 60;
+        var scaler = canvasGo.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        scaler.matchWidthOrHeight = 0.5f;
+        var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+
+        var backdrop = new GameObject("Note Backdrop").AddComponent<Image>();
+        backdrop.transform.SetParent(canvasGo.transform, false);
+        backdrop.color = new Color(0f, 0f, 0f, 0f);
+        backdrop.raycastTarget = false;
+        Anchor(backdrop.rectTransform, new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 330f), new Vector2(0f, 30f));
+        var header = UIText(canvasGo.transform, "Header", font, 30, TextAnchor.LowerCenter);
+        Anchor(header.rectTransform, new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f), new Vector2(-200f, 50f), new Vector2(0f, 300f));
+        header.color = new Color(1f, 0.9f, 0.7f, 0f);
+        header.fontStyle = FontStyle.Bold;
+        var note = UIText(canvasGo.transform, "Note", font, 40, TextAnchor.UpperCenter);
+        Anchor(note.rectTransform, new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 1f), new Vector2(-200f, 220f), new Vector2(0f, 280f));
+        note.color = new Color(1f, 1f, 1f, 0f);
+        note.fontStyle = FontStyle.Italic;
+        note.lineSpacing = 1.2f;
+        var fade = new GameObject("Fade").AddComponent<Image>();
+        fade.transform.SetParent(canvasGo.transform, false);
+        fade.color = new Color(0f, 0f, 0f, 0f);
+        fade.raycastTarget = false;
+        fade.rectTransform.anchorMin = Vector2.zero;
+        fade.rectTransform.anchorMax = Vector2.one;
+        fade.rectTransform.offsetMin = fade.rectTransform.offsetMax = Vector2.zero;
+
+        var fc = new GameObject("FragmentCutscene").AddComponent<FragmentCutscene>();
+        fc.cinematicCam = cam;
+        fc.focus = flower;
+        fc.flower = flower;
+        fc.petals = petals;
+        fc.flowerLight = flowerLight;
+        fc.rippleMaterial = mRipple;
+        fc.present = present ? present.transform : null;
+        fc.sun = sun;
+        fc.fadeImage = fade;
+        fc.headerText = header;
+        fc.noteText = note;
+        fc.noteBackdrop = backdrop;
+        fc.nextScene = "Puzzle2";
+
+        var off = new System.Collections.Generic.List<Behaviour>();
+        off.AddRange(Object.FindObjectsByType<SoulMovement>(FindObjectsSortMode.None));
+        off.AddRange(Object.FindObjectsByType<PlayerInteractor>(FindObjectsSortMode.None));
+        off.AddRange(Object.FindObjectsByType<OrbitCameraInput>(FindObjectsSortMode.None));
+        fc.disableOnPlay = off.ToArray();
+
+        var hide = new System.Collections.Generic.List<Canvas>();
+        if (hud) hide.Add(hud.GetComponent<Canvas>());
+        var split = GameObject.Find("SplitScreenUI");
+        if (split) hide.Add(split.GetComponent<Canvas>());
+        fc.hideCanvases = hide.ToArray();
+        return fc;
+    }
+
+    const string Puzzle2Path = "Assets/Scenes/Sh/Puzzle2.unity";
+
+    /// <summary>Creates a placeholder Puzzle 2 scene once. Never overwrites an existing one.</summary>
+    static void EnsurePuzzle2Placeholder()
+    {
+        if (!AssetDatabase.LoadAssetAtPath<SceneAsset>(Puzzle2Path))
+        {
+            var active = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+            var s = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+            UnityEngine.SceneManagement.SceneManager.SetActiveScene(s);
+
+            var camGo = new GameObject("Main Camera");
+            camGo.tag = "MainCamera";
+            var cam = camGo.AddComponent<Camera>();
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0.07f, 0.09f, 0.12f);
+            camGo.AddComponent<AudioListener>();
+            camGo.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+            var lightGo = new GameObject("Directional Light");
+            var l = lightGo.AddComponent<Light>();
+            l.type = LightType.Directional;
+            lightGo.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
+
+            var canvasGo = new GameObject("PlaceholderUI");
+            var canvas = canvasGo.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            var scaler = canvasGo.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            var title = UIText(canvasGo.transform, "Title", font, 72, TextAnchor.MiddleCenter);
+            Anchor(title.rectTransform, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(0f, 60f));
+            title.text = "Puzzle 2";
+            var sub = UIText(canvasGo.transform, "Subtitle", font, 34, TextAnchor.MiddleCenter);
+            Anchor(sub.rectTransform, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(0f, -30f));
+            sub.text = "Accepting the past  ·  coming soon";
+            sub.color = new Color(0.8f, 0.85f, 0.9f);
+
+            EditorSceneManager.SaveScene(s, Puzzle2Path);
+            UnityEngine.SceneManagement.SceneManager.SetActiveScene(active);
+            EditorSceneManager.CloseScene(s, true);
+        }
+
+        var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+        if (!scenes.Exists(x => x.path == Puzzle2Path))
+        {
+            int at = scenes.FindIndex(x => x.path == ScenePath);
+            scenes.Insert(at >= 0 ? at + 1 : scenes.Count, new EditorBuildSettingsScene(Puzzle2Path, true));
+            EditorBuildSettings.scenes = scenes.ToArray();
+        }
     }
 
     static void SetupCamera(string name, Color sky)
@@ -544,6 +731,12 @@ public static class BridgePuzzleBuilder
         mSocketAwake = Unlit("M_Socket_Awake", new Color(0.45f, 1f, 0.55f));
         mPresent = Lit("M_Present", new Color(0.62f, 0.59f, 0.54f), 0.1f);
         mFuture = Lit("M_Future", new Color(1f, 0.72f, 0.35f), 0.4f);
+        mBeamGold = Unlit("M_Beam_Gold", new Color(1f, 0.62f, 0.15f, 0.6f));
+        MakeTransparent(mBeamGold);
+        mBeamCyan = Unlit("M_Beam_Cyan", new Color(0.4f, 1f, 0.85f, 0.5f));
+        MakeTransparent(mBeamCyan);
+        mPetal = Lit("M_Flower_Petal", new Color(1f, 0.72f, 0.82f), 0.35f);
+        mFlowerCenter = Unlit("M_Flower_Center", new Color(1f, 0.85f, 0.3f));
     }
 
     static Material GetOrCreate(string name, Shader shader)

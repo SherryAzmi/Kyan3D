@@ -12,6 +12,9 @@ EditorBuildSettings:
     path: Assets/Scenes/Sh/SplitCamera.unity
     guid: ef5d864707a79444bb70abea0ae28c74
   - enabled: 1
+    path: Assets/Scenes/Sh/Puzzle2.unity
+    guid: 7dec92b52e230734aac2d99b5bbbdf28
+  - enabled: 1
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
   m_configObjects:

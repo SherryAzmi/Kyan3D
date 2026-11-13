@@ -8,7 +8,9 @@ using UnityEngine;
 ///  2. Present drops the seed in the Memory River -> it appears on the forest bank.
 ///  3. Future places it in the Root Socket and holds Power -> roots grow across the Gap
 ///     while the Ancient Path stones rise out of the desert Chasm.
-///  4. Bridge complete -> both bridges become walkable. Present takes the Mirror Fragment.
+///  4. Bridge complete -> both bridges become walkable. Present takes the Mirror Fragment
+///     -> FragmentCutscene (flower + note) -> next scene.
+/// A light beam in each world points that player at their next target.
 /// </summary>
 public class BridgePuzzle : MonoBehaviour
 {
@@ -16,13 +18,19 @@ public class BridgePuzzle : MonoBehaviour
 
     public PuzzleHUD hud;
 
+    [Header("Players")]
+    public Transform present;
+    public Transform future;
+
     [Header("Desert (Present)")]
     public SandMound[] mounds;
     public Carryable memorySeed;
+    public MemoryRiver desertRiver;
     [Tooltip("Path stones that rise out of the Chasm, in order from near edge to far edge.")]
     public Transform[] desertBridgeStones;
     public float stoneHiddenDepth = 8f;
     public Collider desertBridgeWalkway;
+    public MirrorFragment fragment;
     public Light fragmentLight;
 
     [Header("Forest (Future)")]
@@ -31,13 +39,19 @@ public class BridgePuzzle : MonoBehaviour
     public Transform[] bridgeRoots;
     public Collider forestBridgeWalkway;
 
+    [Header("Guidance")]
+    public GuideBeacon desertBeacon;
+    public GuideBeacon forestBeacon;
+    [Tooltip("World X above which a position counts as the forest.")]
+    public float forestMinX = 150f;
+
     [Header("Ending")]
-    public string fragmentTitle = "Mirror Fragment found";
-    public string fragmentMemory = "Recognizing pain.";
+    public FragmentCutscene fragmentCutscene;
 
     Vector3[] stoneTargets;
     float[] rootLengths;
     int moundsDug;
+    bool seedPlaced, bridgeDone, fragmentTaken;
 
     void Awake()
     {
@@ -62,13 +76,81 @@ public class BridgePuzzle : MonoBehaviour
     {
         yield return new WaitForSeconds(1.5f);
         if (!hud) yield break;
-        hud.ShowMessage(0, "The sand hides something... (hold Power near a mound)", 6f);
+        hud.ShowMessage(0, "The sand hides something... follow the light.", 6f);
         hud.ShowMessage(1, "The roots can't reach the other side of the gap.", 6f);
     }
 
     void OnDestroy()
     {
         if (Instance == this) Instance = null;
+    }
+
+    // ---------------------------------------------------------------- guidance
+
+    void Update()
+    {
+        Vector3? d = null, f = null;
+
+        if (fragmentTaken) { }
+        else if (bridgeDone)
+        {
+            if (fragment) d = fragment.transform.position;
+        }
+        else if (seedPlaced)
+        {
+            if (rootSocket) f = rootSocket.transform.position; // keep holding Power here
+        }
+        else if (moundsDug < mounds.Length)
+        {
+            d = NearestUndugMound();
+        }
+        else if (memorySeed)
+        {
+            var holder = memorySeed.Holder;
+            Vector3 seedPos = memorySeed.transform.position;
+            if (holder == null)
+            {
+                if (InForest(seedPos)) f = seedPos;
+                else { d = seedPos; f = SocketPos(); }
+            }
+            else if (InForest(holder.transform.position))
+            {
+                f = SocketPos();
+            }
+            else
+            {
+                d = RiverPointNear(desertRiver, holder.transform.position);
+                f = SocketPos();
+            }
+        }
+
+        if (desertBeacon) desertBeacon.SetTarget(d);
+        if (forestBeacon) forestBeacon.SetTarget(f);
+    }
+
+    bool InForest(Vector3 p) => p.x > forestMinX;
+
+    Vector3? SocketPos() => rootSocket ? rootSocket.transform.position : (Vector3?)null;
+
+    Vector3? NearestUndugMound()
+    {
+        Vector3 from = present ? present.position : Vector3.zero;
+        Vector3? best = null;
+        float bestD = float.MaxValue;
+        foreach (var m in mounds)
+        {
+            if (!m || m.Dug) continue;
+            float dist = (m.transform.position - from).sqrMagnitude;
+            if (dist < bestD) { bestD = dist; best = m.transform.position; }
+        }
+        return best;
+    }
+
+    static Vector3? RiverPointNear(MemoryRiver river, Vector3 p)
+    {
+        if (!river) return null;
+        float z = Mathf.Clamp(river.transform.InverseTransformPoint(p).z, river.zMin + 1f, river.zMax - 1f);
+        return river.transform.TransformPoint(new Vector3(0f, 0f, z));
     }
 
     // ---------------------------------------------------------------- events
@@ -104,6 +186,7 @@ public class BridgePuzzle : MonoBehaviour
 
     public void OnSeedPlaced()
     {
+        seedPlaced = true;
         hud?.ShowMessage(1, "The seed takes root. Hold Power to make the roots grow!", 5f);
         hud?.ShowMessage(0, "The ground trembles...", 3f);
     }
@@ -131,6 +214,7 @@ public class BridgePuzzle : MonoBehaviour
 
     public void OnBridgeComplete()
     {
+        bridgeDone = true;
         SetBridgeGrowth(1f);
         if (desertBridgeWalkway) desertBridgeWalkway.enabled = true;
         if (forestBridgeWalkway) forestBridgeWalkway.enabled = true;
@@ -141,9 +225,11 @@ public class BridgePuzzle : MonoBehaviour
 
     public void OnFragmentCollected(MirrorFragment f)
     {
-        hud?.ShowBoth($"{fragmentTitle}\n<size=30><i>{fragmentMemory}</i></size>", 6f);
+        fragmentTaken = true;
         if (fragmentLight) StartCoroutine(Pulse(fragmentLight, fragmentLight.intensity, 0f));
         Debug.Log("[BridgePuzzle] Puzzle complete: Mirror Fragment collected.");
+        if (fragmentCutscene) fragmentCutscene.Play();
+        else hud?.ShowBoth("Mirror Fragment found", 6f);
     }
 
     static IEnumerator Pulse(Light l, float from, float to)
