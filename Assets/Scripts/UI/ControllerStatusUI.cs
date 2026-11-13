@@ -41,7 +41,7 @@ public class ControllerStatusUI : MonoBehaviour
     {
         if (!label || !player) return;
         var pad = player.Pad;
-        string who = player.soul == SoulType.Light ? "P1 Light" : "P2 Void";
+        string who = player.soul == SoulType.Light ? "P1 Present" : "P2 Future";
 
         if (pad == null)
         {
@@ -63,8 +63,8 @@ public class ControllerStatusUI : MonoBehaviour
     {
         switch (l)
         {
-            case KeyboardDebugLayout.WasdMouse: return "WASD + mouse, Space jump";
-            case KeyboardDebugLayout.Arrows: return "arrows, , . turn, Right Ctrl jump";
+            case KeyboardDebugLayout.WasdMouse: return "WASD + mouse, Space jump, E interact, hold F power";
+            case KeyboardDebugLayout.Arrows: return "arrows, , . turn, Enter jump, R-Shift interact, hold R-Ctrl power";
             default: return "off";
         }
     }

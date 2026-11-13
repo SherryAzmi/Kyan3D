@@ -8,15 +8,15 @@ public enum SoulType { Light, Void }
 public enum KeyboardDebugLayout
 {
     None,
-    WasdMouse, // WASD move, mouse look (click to lock, Esc to unlock), Space jump, E interact
-    Arrows     // Arrows move, , . turn camera (Numpad 8/2 tilt), Right Ctrl jump, Right Shift interact
+    WasdMouse, // WASD move, mouse look (click to lock, Esc to unlock), Space jump, E interact, hold F power
+    Arrows     // Arrows move, , . turn camera (Numpad 8/2 tilt), Enter jump, Right Shift interact, hold Right Ctrl power
 }
 
 /// <summary>
 /// Reads input for ONE player.
 /// Main control = PlayStation controller (any Gamepad works: DualShock 4, DualSense, Xbox...).
 ///   Light Soul (P1) = controller #1, Void Soul (P2) = controller #2 (by the order they were plugged in).
-///   Left stick move · Right stick camera · Cross (X) jump · Square interact.
+///   Left stick move · Right stick camera · Cross (X) jump · Square interact · hold R2 power.
 /// Keyboard debug controls are always available as a fallback while testing.
 /// </summary>
 public class PlayerInputReader : MonoBehaviour
@@ -40,6 +40,8 @@ public class PlayerInputReader : MonoBehaviour
     public bool LookIsMouseDelta { get; private set; }
     public bool JumpPressed { get; private set; }
     public bool InteractPressed { get; private set; }
+    /// <summary>True while the power button is held (dig / grow).</summary>
+    public bool PowerHeld { get; private set; }
 
     /// <summary>The controller assigned to this player right now (null if not plugged in).</summary>
     public Gamepad Pad
@@ -56,7 +58,7 @@ public class PlayerInputReader : MonoBehaviour
     void Update()
     {
         Move = Vector2.zero; Look = Vector2.zero; LookIsMouseDelta = false;
-        JumpPressed = false; InteractPressed = false;
+        JumpPressed = false; InteractPressed = false; PowerHeld = false;
 
         var pad = Pad;
         if (pad != lastPad) { OnPadChanged(pad); lastPad = pad; }
@@ -76,6 +78,7 @@ public class PlayerInputReader : MonoBehaviour
         Look = DeadZone(pad.rightStick.ReadValue());
         JumpPressed = pad.buttonSouth.wasPressedThisFrame;    // Cross (X) on PlayStation
         InteractPressed = pad.buttonWest.wasPressedThisFrame; // Square on PlayStation
+        PowerHeld = pad.rightTrigger.ReadValue() > 0.4f;       // R2
     }
 
     // Keyboard only fills in what the controller didn't, so both can be used at once while testing.
@@ -89,6 +92,7 @@ public class PlayerInputReader : MonoBehaviour
                 Move = Axis(kb.aKey.isPressed, kb.dKey.isPressed, kb.sKey.isPressed, kb.wKey.isPressed);
             JumpPressed |= kb.spaceKey.wasPressedThisFrame;
             InteractPressed |= kb.eKey.wasPressedThisFrame;
+            PowerHeld |= kb.fKey.isPressed;
             if (kb.escapeKey.wasPressedThisFrame) SetCursorLocked(false);
         }
         if (mouse != null)
@@ -111,8 +115,9 @@ public class PlayerInputReader : MonoBehaviour
         if (Look == Vector2.zero)
             Look = Axis(kb.commaKey.isPressed || kb.numpad4Key.isPressed, kb.periodKey.isPressed || kb.numpad6Key.isPressed,
                         kb.numpad2Key.isPressed, kb.numpad8Key.isPressed);
-        JumpPressed |= kb.rightCtrlKey.wasPressedThisFrame;
+        JumpPressed |= kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame;
         InteractPressed |= kb.rightShiftKey.wasPressedThisFrame;
+        PowerHeld |= kb.rightCtrlKey.isPressed;
     }
 
     void OnPadChanged(Gamepad pad)
