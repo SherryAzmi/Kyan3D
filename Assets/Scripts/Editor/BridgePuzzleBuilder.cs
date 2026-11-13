@@ -13,7 +13,7 @@ using UnityEngine.UI;
 ///   spawn z=-15 · 3 sand mounds on the path at x=-6 · Memory River along x=14 (z -40..3)
 ///   Chasm/Gap z=4..10 across the whole width · altar at (-6, z=15.5)
 /// </summary>
-public static class BridgePuzzleBuilder
+public static partial class BridgePuzzleBuilder
 {
     const string ScenePath = "Assets/Scenes/Sh/SplitCamera.unity";
     const string MatDir = "Assets/Materials/World";

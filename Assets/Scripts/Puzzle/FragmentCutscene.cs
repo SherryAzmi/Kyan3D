@@ -44,7 +44,7 @@ public class FragmentCutscene : MonoBehaviour
     [Tooltip("Dark band behind the note so it reads on bright sand.")]
     public Image noteBackdrop;
     [Range(0f, 1f)] public float backdropAlpha = 0.5f;
-    public string header = "Mirror Fragment 1 of 5  ·  Recognizing pain";
+    public string header = "Mirror Fragment 1 of 3  ·  Recognizing pain";
     [TextArea(3, 6)]
     public string note = "I was tired. I was allowed to be.\nHurting doesn't make me less worthy of love.\nI'm still here, and that's a start.";
     public float noteHoldTime = 6f;

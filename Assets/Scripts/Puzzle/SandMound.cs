@@ -50,5 +50,6 @@ public class SandMound : Interactable
         gameObject.SetActive(false); // also removes it from Interactable.All
         if (revealedStone && revealedMaterial) revealedStone.sharedMaterial = revealedMaterial;
         if (BridgePuzzle.Instance) BridgePuzzle.Instance.OnMoundDug(this);
+        if (MirrorPuzzle.Instance) MirrorPuzzle.Instance.OnMoundDug(this);
     }
 }
