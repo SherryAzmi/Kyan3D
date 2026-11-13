@@ -32,7 +32,7 @@ public class OrbitCameraInput : MonoBehaviour
         if (look == Vector2.zero) return;
 
         float dx, dy;
-        if (input.IsMouse)
+        if (input.LookIsMouseDelta)
         {
             dx = look.x * mouseSensitivityX;
             dy = look.y * mouseSensitivityY;

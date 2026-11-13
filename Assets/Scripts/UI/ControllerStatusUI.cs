@@ -3,8 +3,8 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 /// <summary>
-/// Shows whether P2's phone controller is connected, on P2's half of the screen.
-/// Also logs every device connect/disconnect to the Console (handy when pairing the phone).
+/// Shows on a player's half of the screen whether their PlayStation controller is connected.
+/// Hides itself a few seconds after the controller connects.
 /// </summary>
 public class ControllerStatusUI : MonoBehaviour
 {
@@ -12,19 +12,25 @@ public class ControllerStatusUI : MonoBehaviour
     public Text label;
     [Tooltip("Hide the label this many seconds after the controller connects.")]
     public float hideAfterConnected = 4f;
+    [Tooltip("Log every device connect/disconnect to the Console (enable on one instance only).")]
+    public bool logDeviceChanges = false;
 
     float connectedTime = -1f;
 
     void OnEnable()
     {
+        if (!logDeviceChanges) return;
         InputSystem.onDeviceChange += OnDeviceChange;
         foreach (var d in InputSystem.devices)
             Debug.Log($"[Input] Device present: {d.displayName}  ({d.layout})");
     }
 
-    void OnDisable() => InputSystem.onDeviceChange -= OnDeviceChange;
+    void OnDisable()
+    {
+        if (logDeviceChanges) InputSystem.onDeviceChange -= OnDeviceChange;
+    }
 
-    void OnDeviceChange(InputDevice device, InputDeviceChange change)
+    static void OnDeviceChange(InputDevice device, InputDeviceChange change)
     {
         if (change == InputDeviceChange.Added || change == InputDeviceChange.Removed ||
             change == InputDeviceChange.Reconnected || change == InputDeviceChange.Disconnected)
@@ -34,21 +40,32 @@ public class ControllerStatusUI : MonoBehaviour
     void Update()
     {
         if (!label || !player) return;
-        string name = player.ConnectedControllerName;
+        var pad = player.Pad;
+        string who = player.soul == SoulType.Light ? "P1 Light" : "P2 Void";
 
-        if (name == null)
+        if (pad == null)
         {
             connectedTime = -1f;
             label.enabled = true;
             label.color = new Color(1f, 0.55f, 0.45f);
-            label.text = "P2: no controller — connect the phone\n(testing: arrow keys, , . to turn, Right Ctrl jump)";
+            label.text = $"{who}: plug in controller #{player.gamepadIndex + 1}\n(keyboard test: {KeyboardHint(player.keyboardDebug)})";
         }
         else
         {
             if (connectedTime < 0f) connectedTime = Time.unscaledTime;
             label.color = new Color(0.6f, 1f, 0.6f);
-            label.text = "P2 controller connected: " + name;
+            label.text = $"{who}: {pad.displayName} connected";
             label.enabled = Time.unscaledTime - connectedTime < hideAfterConnected;
+        }
+    }
+
+    static string KeyboardHint(KeyboardDebugLayout l)
+    {
+        switch (l)
+        {
+            case KeyboardDebugLayout.WasdMouse: return "WASD + mouse, Space jump";
+            case KeyboardDebugLayout.Arrows: return "arrows, , . turn, Right Ctrl jump";
+            default: return "off";
         }
     }
 }

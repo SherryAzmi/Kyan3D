@@ -48,8 +48,10 @@ public static class SplitCameraSceneBuilder
 
         // ---------- players ----------
         var playersRoot = new GameObject("--- PLAYERS ---");
-        var lightP = MakePlayer(playersRoot.transform, "LightSoul_P1", new Vector3(-3, 0, 0), matLight, SoulType.Light, InputScheme.KeyboardMouse);
-        var voidP = MakePlayer(playersRoot.transform, "VoidSoul_P2", new Vector3(3, 0, 0), matVoid, SoulType.Void, InputScheme.Gamepad);
+        var lightP = MakePlayer(playersRoot.transform, "LightSoul_P1", new Vector3(-3, 0, 0), matLight, SoulType.Light, 0,
+            KeyboardDebugLayout.WasdMouse, new Color(1f, 0.7f, 0.15f));   // warm gold light bar
+        var voidP = MakePlayer(playersRoot.transform, "VoidSoul_P2", new Vector3(3, 0, 0), matVoid, SoulType.Void, 1,
+            KeyboardDebugLayout.Arrows, new Color(0.45f, 0.2f, 1f));      // violet light bar
 
         // ---------- cameras ----------
         var camRoot = new GameObject("--- CAMERAS ---");
@@ -79,28 +81,34 @@ public static class SplitCameraSceneBuilder
         rt.sizeDelta = new Vector2(6, 0);
         rt.anchoredPosition = Vector2.zero;
 
-        // P2 controller status (top of the right half)
-        var statusGo = new GameObject("P2_ControllerStatus");
-        statusGo.transform.SetParent(ui.transform, false);
-        var txt = statusGo.AddComponent<Text>();
-        txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        txt.fontSize = 28;
-        txt.alignment = TextAnchor.UpperCenter;
-        txt.raycastTarget = false;
-        var srt = txt.rectTransform;
-        srt.anchorMin = new Vector2(0.5f, 1); srt.anchorMax = new Vector2(1, 1);
-        srt.pivot = new Vector2(0.5f, 1);
-        srt.sizeDelta = new Vector2(0, 90); srt.anchoredPosition = new Vector2(0, -20);
-        var outline = statusGo.AddComponent<Outline>();
-        outline.effectColor = Color.black;
-        var status = ui.AddComponent<ControllerStatusUI>();
-        status.player = voidP.GetComponent<PlayerInputReader>();
-        status.label = txt;
+        // Controller status labels (top of each half)
+        MakeStatusLabel(ui.transform, "P1_ControllerStatus", 0f, 0.5f, lightP.GetComponent<PlayerInputReader>(), true);
+        MakeStatusLabel(ui.transform, "P2_ControllerStatus", 0.5f, 1f, voidP.GetComponent<PlayerInputReader>(), false);
 
         EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
         EditorSceneManager.SaveOpenScenes();
         AssetDatabase.SaveAssets();
         Debug.Log("[Kyan] Split camera rig built.");
+    }
+
+    static void MakeStatusLabel(Transform canvas, string name, float xMin, float xMax, PlayerInputReader player, bool logDevices)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(canvas, false);
+        var txt = go.AddComponent<Text>();
+        txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        txt.fontSize = 28;
+        txt.alignment = TextAnchor.UpperCenter;
+        txt.raycastTarget = false;
+        var rt = txt.rectTransform;
+        rt.anchorMin = new Vector2(xMin, 1); rt.anchorMax = new Vector2(xMax, 1);
+        rt.pivot = new Vector2(0.5f, 1);
+        rt.sizeDelta = new Vector2(0, 90); rt.anchoredPosition = new Vector2(0, -20);
+        go.AddComponent<Outline>().effectColor = Color.black;
+        var status = go.AddComponent<ControllerStatusUI>();
+        status.player = player;
+        status.label = txt;
+        status.logDeviceChanges = logDevices;
     }
 
     static Material MakeMat(string name, Color c)
@@ -118,7 +126,8 @@ public static class SplitCameraSceneBuilder
         return m;
     }
 
-    static GameObject MakePlayer(Transform parent, string name, Vector3 pos, Material mat, SoulType soul, InputScheme scheme)
+    static GameObject MakePlayer(Transform parent, string name, Vector3 pos, Material mat, SoulType soul, int padIndex,
+        KeyboardDebugLayout kbLayout, Color lightBar)
     {
         var root = new GameObject(name);
         root.tag = "Player";
@@ -129,7 +138,10 @@ public static class SplitCameraSceneBuilder
         cc.height = 2f; cc.radius = 0.4f; cc.center = new Vector3(0, 1, 0);
 
         var reader = root.AddComponent<PlayerInputReader>();
-        reader.soul = soul; reader.scheme = scheme;
+        reader.soul = soul;
+        reader.gamepadIndex = padIndex;
+        reader.keyboardDebug = kbLayout;
+        reader.lightBarColor = lightBar;
         root.AddComponent<SoulMovement>().input = reader;
 
         var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
