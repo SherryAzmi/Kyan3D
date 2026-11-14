@@ -177,7 +177,7 @@ public class MirrorPuzzle : MonoBehaviour
             bool a = Holding(0), b = Holding(1);
             if (a && b)
             {
-                JoinProgress = Mathf.Clamp01(JoinProgress + Time.deltaTime / joinTime);
+                JoinProgress = Mathf.Clamp01(JoinProgress + Time.deltaTime * PlayerInteractor.HoldSpeed / joinTime);
                 MirrorCrackDivider.Hold(JoinProgress);
                 if (GameAudio.I) GameAudio.Hold("join", GameAudio.I.joinHum, -1, 0.8f + 0.7f * JoinProgress, 0.6f + 0.4f * JoinProgress);
                 foreach (var m in mirrors) if (m.glow) m.glow.intensity = 1f + 5f * JoinProgress;

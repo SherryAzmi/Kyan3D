@@ -25,6 +25,7 @@ public class BloomSpot : Interactable
     }
 
     public override string Prompt(PlayerInteractor p) => Bloomed || p.Carried ? null : "Hold {P} to bloom";
+    public override bool IsSolid => true;
     public override bool UsesPower(PlayerInteractor p) => !Bloomed;
     public override float Progress => progress;
 
