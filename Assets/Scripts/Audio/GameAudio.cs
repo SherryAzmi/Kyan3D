@@ -35,7 +35,8 @@ public class GameAudio : MonoBehaviour
     public AudioClip joinHum;      // loop while both hold the mirror
     public AudioClip mirrorWhole;
     public AudioClip click;
-    public AudioClip waterFlow;    // loop while the river fills (Puzzle 2)
+    public AudioClip waterFlow;    // loop while the river fills (Puzzle 2) and near any river
+    public AudioClip waterStep;    // footstep while wading through the river
 
     [Header("Ending")]
     public AudioClip endingMusic;

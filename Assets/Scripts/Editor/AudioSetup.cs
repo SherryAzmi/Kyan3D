@@ -73,6 +73,7 @@ public static class AudioSetup
         a.mirrorWhole = SoundSynth.Load("sfx_mirror_whole");
         a.click = SoundSynth.Load("sfx_click");
         a.waterFlow = SoundSynth.Load("sfx_water_flow");
+        a.waterStep = SoundSynth.Load("sfx_water_step");
         a.endingMusic = SoundSynth.Load("music_ending");
         return a;
     }

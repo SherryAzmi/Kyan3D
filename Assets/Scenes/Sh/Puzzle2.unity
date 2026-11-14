@@ -3255,6 +3255,7 @@ GameObject:
   m_Component:
   - component: {fileID: 197179544}
   - component: {fileID: 197179543}
+  - component: {fileID: 197179545}
   m_Layer: 0
   m_Name: Memory River
   m_TagString: Untagged
@@ -3320,6 +3321,23 @@ Transform:
   - {fileID: 312352371}
   m_Father: {fileID: 150712795}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &197179545
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 197179542}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a1c8a5cfdb9583449fd2786d2117f12, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RiverWading
+  stepInterval: 0.38
+  minSpeed: 0.6
+  rippleSize: 1.3
+  hearDistance: 9
+  flowVolume: 0.45
 --- !u!1 &198627164
 GameObject:
   m_ObjectHideFlags: 0
@@ -14574,6 +14592,7 @@ GameObject:
   - component: {fileID: 803910085}
   - component: {fileID: 803910084}
   - component: {fileID: 803910083}
+  - component: {fileID: 803910086}
   m_Layer: 0
   m_Name: Water
   m_TagString: Untagged
@@ -14653,6 +14672,24 @@ Transform:
   m_Children: []
   m_Father: {fileID: 197179544}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &803910086
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 803910082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 648d0edfe021d984ab6b340d95f63cc1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RiverWaves
+  amplitude: 0.05
+  wavelength: 2.2
+  flowSpeed: 1.4
+  choppiness: 0.5
+  resolution: 2.5
+  shimmer: 0.08
 --- !u!1 &808078479
 GameObject:
   m_ObjectHideFlags: 0
@@ -15451,6 +15488,7 @@ MonoBehaviour:
   mirrorWhole: {fileID: 8300000, guid: 286767e0459a3484e84321ad9d6b4bed, type: 3}
   click: {fileID: 8300000, guid: abba585a89b70e44b9b8d62b7fc5ac82, type: 3}
   waterFlow: {fileID: 8300000, guid: e18872b1ec8ba1441bf25dca95db697d, type: 3}
+  waterStep: {fileID: 8300000, guid: fd7a086b338405b46864e7d9bae6952b, type: 3}
   endingMusic: {fileID: 8300000, guid: b2f703d4c830065438489dcd876f0800, type: 3}
   forestMinX: 150
   endingMinX: 450
@@ -18763,6 +18801,7 @@ GameObject:
   m_Component:
   - component: {fileID: 984278527}
   - component: {fileID: 984278528}
+  - component: {fileID: 984278529}
   m_Layer: 0
   m_Name: Memory River
   m_TagString: Untagged
@@ -18828,6 +18867,23 @@ MonoBehaviour:
   bankX: -3
   rippleMaterial: {fileID: 2100000, guid: 03953ff052a59194fb171ad34e5755f4, type: 2}
   water: {fileID: 1836358890}
+--- !u!114 &984278529
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 984278526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a1c8a5cfdb9583449fd2786d2117f12, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RiverWading
+  stepInterval: 0.38
+  minSpeed: 0.6
+  rippleSize: 1.3
+  hearDistance: 9
+  flowVolume: 0.45
 --- !u!1 &986290594
 GameObject:
   m_ObjectHideFlags: 0
@@ -36820,6 +36876,7 @@ GameObject:
   - component: {fileID: 1836358889}
   - component: {fileID: 1836358891}
   - component: {fileID: 1836358890}
+  - component: {fileID: 1836358892}
   m_Layer: 0
   m_Name: Water
   m_TagString: Untagged
@@ -36899,6 +36956,24 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1836358888}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1836358892
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1836358888}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 648d0edfe021d984ab6b340d95f63cc1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RiverWaves
+  amplitude: 0.05
+  wavelength: 2.2
+  flowSpeed: 1.4
+  choppiness: 0.5
+  resolution: 2.5
+  shimmer: 0.08
 --- !u!1001 &1839605255
 PrefabInstance:
   m_ObjectHideFlags: 0

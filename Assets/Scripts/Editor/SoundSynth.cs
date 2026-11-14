@@ -51,6 +51,7 @@ public static class SoundSynth
         Save("sfx_mirror_whole", Reverb(Bells(new[] { 261.63f, 329.63f, 392f, 523.25f, 659.25f, 1046.5f }, 0.05f, 5f, 0.9f), 0.45f), 0.9f);
         Save("sfx_click", Click(), 0.6f);
         Save("sfx_water_flow", Loop(WaterFlow(3f), 0.5f), 0.6f);
+        Save("sfx_water_step", WaterStep(), 0.7f);
 
         AssetDatabase.Refresh();
         Debug.Log($"[SoundSynth] Sounds written to {Dir}.");
@@ -435,6 +436,33 @@ public static class SoundSynth
         {
             float t = i / (float)SR;
             s[i] = 0.4f * Sin(220f, t) + 0.25f * Sin(220.6f, t) + 0.2f * Sin(330f, t) + 0.12f * Sin(440.4f, t);
+        }
+        return s;
+    }
+
+    static float[] WaterStep()
+    {
+        // a foot sloshing into shallow water: soft low thump, a burst of splash, a few bubbles
+        var s = New(0.45f);
+        var splash = HighPass(LowPass(White(s.Length), 4000f), 600f);
+        for (int i = 0; i < s.Length; i++)
+        {
+            float t = i / (float)SR;
+            float env = Mathf.Clamp01(t / 0.012f) * Mathf.Exp(-t * 11f);
+            s[i] = 0.75f * splash[i] * env + 0.35f * Mathf.Sin(2f * Mathf.PI * 95f * t) * Mathf.Exp(-t * 25f);
+        }
+        for (int k = 0; k < 5; k++)
+        {
+            float at = 0.03f + (float)rnd.NextDouble() * 0.2f;
+            float f0 = 600f + (float)rnd.NextDouble() * 900f;
+            int a = (int)(at * SR), len = (int)(0.035f * SR);
+            float ph = 0f;
+            for (int i = 0; i < len && a + i < s.Length; i++)
+            {
+                float u = i / (float)len;
+                ph += 2f * Mathf.PI * f0 * (1f + 0.9f * u) / SR;
+                s[a + i] += 0.18f * Mathf.Sin(ph) * Mathf.Sin(Mathf.PI * u);
+            }
         }
         return s;
     }

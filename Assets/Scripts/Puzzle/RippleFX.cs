@@ -11,7 +11,10 @@ public class RippleFX : MonoBehaviour
     Material mat;
     Color baseColor;
 
-    public static void Spawn(Vector3 pos, Material material, float delay)
+    public static void Spawn(Vector3 pos, Material material, float delay) => Spawn(pos, material, delay, 4f, 1.6f);
+
+    /// <summary>Ripple with a custom size (metres) and lifetime (seconds), e.g. small footstep ripples.</summary>
+    public static void Spawn(Vector3 pos, Material material, float delay, float size, float life)
     {
         if (!material) return;
         var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -26,6 +29,8 @@ public class RippleFX : MonoBehaviour
         fx.mat = r.material;
         fx.baseColor = fx.mat.GetColor("_BaseColor");
         fx.delay = delay;
+        fx.maxSize = size;
+        fx.duration = life;
     }
 
     void Update()

@@ -280,6 +280,7 @@ public static partial class BridgePuzzleBuilder
         river.localPosition = new Vector3(RiverX, 0f, 0f);
         Box("Dry Bed", river, new Vector3(0f, 0.01f, -8.5f), new Vector3(4.4f, 0.02f, 23f), mDryBed, false);
         var strip = Box("Water", river, new Vector3(0f, 0.02f, -8.5f), new Vector3(4f, 0.04f, 23f), water, false);
+        strip.AddComponent<RiverWaves>();
         strip.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
         waterStrip = strip.transform;
         for (float z = -19f; z <= 2.5f; z += 2.2f)
@@ -290,6 +291,7 @@ public static partial class BridgePuzzleBuilder
         Sph("End Rocks", river, new Vector3(0f, 0.2f, 3.4f), new Vector3(4.6f, 1f, 1.4f), mStone);
 
         var mr = river.gameObject.AddComponent<MemoryRiver>();
+        river.gameObject.AddComponent<RiverWading>();
         mr.range = 1.6f;
         mr.zMin = -20f;
         mr.zMax = 3f;

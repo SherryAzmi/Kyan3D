@@ -225,6 +225,7 @@ public static partial class BridgePuzzleBuilder
         var river = Child(world, "Memory River");
         river.localPosition = new Vector3(RiverX, 0f, 0f);
         var strip = Box("Water", river, new Vector3(0f, 0.02f, -18.5f), new Vector3(4f, 0.04f, 43f), water, false);
+        strip.AddComponent<RiverWaves>();
         strip.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
         for (float z = -19f; z <= 3f; z += 2.2f)
         {
@@ -232,6 +233,7 @@ public static partial class BridgePuzzleBuilder
             Box("Bank Stone", river, new Vector3(2.2f, 0.08f, z + Mathf.Cos(z) * 0.4f), new Vector3(0.5f, 0.2f, 0.7f), mStone, false);
         }
         var mr = river.gameObject.AddComponent<MemoryRiver>();
+        river.gameObject.AddComponent<RiverWading>();
         mr.range = 1.6f;
         mr.zMin = -20f;
         mr.zMax = 3f;
