@@ -56,6 +56,16 @@ public static class SoundSynth
         for (int v = 1; v <= 4; v++) Save("sfx_step_grass_" + v, GrassStep(), 0.55f);
         Save("sfx_fall", FallWhoosh(), 0.7f);
         Save("sfx_hurt", Reverb(Hurt(), 0.2f), 0.95f);
+        Save("sfx_throw", Reverb(Throw(), 0.3f), 0.8f);
+        Save("sfx_arrive_neon", Reverb(ArriveNeon(), 0.4f), 0.8f);
+        Save("sfx_respawn", Reverb(Respawn(), 0.4f), 0.85f);
+        Save("sfx_message", Reverb(Message(), 0.3f), 0.55f);
+        for (int v = 1; v <= 4; v++) Save("sfx_pen_" + v, PenStroke(), 0.45f);
+        Save("music_finale", Loop(Reverb(Finale(48f), 0.45f), 3f), 0.5f);
+        for (int v = 1; v <= 6; v++) Save("sfx_key_" + v, Reverb(KeyClick(false), 0.08f), 0.5f);
+        Save("sfx_key_space", Reverb(KeyClick(true), 0.08f), 0.5f);
+        Save("sfx_key_enter", Reverb(KeyEnter(), 0.1f), 0.55f);
+        Save("music_letter", Loop(Reverb(LetterTheme(40f), 0.5f), 3f), 0.5f);
 
         AssetDatabase.Refresh();
         Debug.Log($"[SoundSynth] Sounds written to {Dir}.");
@@ -477,6 +487,228 @@ public static class SoundSynth
             // soft square-ish tone = the "you got hurt" sting
             float tone = (Mathf.Sin(ph) + 0.33f * Mathf.Sin(3f * ph) + 0.25f * Mathf.Sin(ph2)) * Env(t - 0.02f, 0.01f, 5f);
             s[i] = 0.9f * thud + 0.45f * crunch[i] * Mathf.Exp(-t * 18f) + 0.35f * tone;
+        }
+        return s;
+    }
+
+    static float[] Throw()
+    {
+        // a quick airy swish (the toss) and a magic shimmer that rises as the river takes it
+        var s = New(1.0f);
+        var n = White(s.Length);
+        float bp = 0f, lp = 0f;
+        for (int i = 0; i < s.Length; i++)
+        {
+            float t = i / (float)SR;
+            float cutoff = Mathf.Lerp(600f, 3200f, Mathf.Clamp01(t / 0.25f));
+            lp += (1f - Mathf.Exp(-2f * Mathf.PI * cutoff / SR)) * (n[i] - lp);
+            bp += (1f - Mathf.Exp(-2f * Mathf.PI * 300f / SR)) * (lp - bp);
+            float swish = (lp - bp) * Mathf.Clamp01(t / 0.05f) * Mathf.Exp(-t * 7f);
+            s[i] = 1.1f * swish;
+        }
+        float[] up = { 659.25f, 783.99f, 987.77f, 1318.5f };
+        for (int k = 0; k < up.Length; k++) AddBell(s, 0.12f + k * 0.07f, up[k], 0.16f, 0.5f);
+        return s;
+    }
+
+    static float[] ArriveNeon()
+    {
+        // a soft "whoomp" of light swelling in, then a bright sparkling chord
+        var s = New(1.8f);
+        var n = LowPass(White(s.Length), 2500f);
+        for (int i = 0; i < s.Length; i++)
+        {
+            float t = i / (float)SR;
+            float swell = Mathf.Clamp01(t / 0.3f) * Mathf.Exp(-Mathf.Max(0f, t - 0.3f) * 9f);
+            s[i] = 0.35f * n[i] * swell + 0.25f * Sin(Mathf.Lerp(180f, 420f, Mathf.Clamp01(t / 0.3f)), t) * swell;
+        }
+        float[] chord = { 783.99f, 1046.5f, 1318.5f, 1567.98f, 2093f };
+        for (int k = 0; k < chord.Length; k++) AddBell(s, 0.28f + k * 0.045f, chord[k], 0.2f, 1.1f);
+        for (int k = 0; k < 10; k++) AddBell(s, 0.35f + (float)rnd.NextDouble() * 0.9f, 2400f + (float)rnd.NextDouble() * 2400f, 0.05f, 0.15f); // glitter
+        return s;
+    }
+
+    static float[] Respawn()
+    {
+        // rewinding swell (reverse-like rise) into a warm, calm chime: "you are back"
+        var s = New(2.0f);
+        var n = LowPass(White(s.Length), 3000f);
+        float ph = 0f;
+        for (int i = 0; i < s.Length; i++)
+        {
+            float t = i / (float)SR;
+            float rise = t < 0.7f ? Mathf.Pow(t / 0.7f, 2.2f) : Mathf.Exp(-(t - 0.7f) * 14f);
+            ph += 2f * Mathf.PI * Mathf.Lerp(220f, 660f, Mathf.Clamp01(t / 0.7f)) / SR;
+            s[i] = rise * (0.25f * n[i] + 0.3f * Mathf.Sin(ph) + 0.12f * Mathf.Sin(ph * 2.005f));
+        }
+        float[] chord = { 523.25f, 659.25f, 783.99f, 1046.5f };
+        for (int k = 0; k < chord.Length; k++) AddBell(s, 0.7f + k * 0.03f, chord[k], 0.22f, 1.3f);
+        return s;
+    }
+
+    static float[] Message()
+    {
+        // a soft, friendly "new message" chime: two quick rising notes with a gentle glow
+        var s = New(1.1f);
+        AddBell(s, 0f, 880f, 0.32f, 0.35f);
+        AddBell(s, 0.09f, 1318.5f, 0.28f, 0.55f);
+        AddBell(s, 0.09f, 1760f, 0.06f, 0.3f);
+        return s;
+    }
+
+    static float[] PenStroke()
+    {
+        // one stroke of a pen on paper: a short, papery scratch with a little grain
+        float len = 0.05f + (float)rnd.NextDouble() * 0.05f;
+        var s = New(len + 0.02f);
+        var n = White(s.Length);
+        float lp = 0f, hp = 0f, prev = 0f;
+        float cutoff = 3500f + (float)rnd.NextDouble() * 2500f;
+        for (int i = 0; i < s.Length; i++)
+        {
+            float t = i / (float)SR;
+            lp += (1f - Mathf.Exp(-2f * Mathf.PI * cutoff / SR)) * (n[i] - lp);
+            hp = 0.97f * (hp + lp - prev); prev = lp;                         // remove the rumble
+            float grain = 0.7f + 0.3f * Mathf.Sin(t * 2f * Mathf.PI * (90f + 60f * (float)rnd.NextDouble())); // paper fibres
+            float env = Mathf.Clamp01(t / 0.006f) * Mathf.Clamp01((len - t) / 0.02f + 0.0f);
+            s[i] = hp * grain * env;
+        }
+        return s;
+    }
+
+    /// <summary>
+    /// One key on a soft keyboard: a crisp plastic click as the key bottoms out, a short low "thock"
+    /// from the case, and a faint click as it springs back up. Space bar = deeper and longer.
+    /// </summary>
+    static float[] KeyClick(bool space)
+    {
+        float r() => (float)rnd.NextDouble();
+        var s = New(0.16f);
+        var n = White(s.Length);
+        float clickHz = (space ? 1800f : 2600f) + r() * 1200f;
+        float thockHz = (space ? 120f : 190f) + r() * 50f;
+        float upAt = 0.07f + r() * 0.03f;
+        float bp = 0f, lp = 0f, ph = 0f;
+        for (int i = 0; i < s.Length; i++)
+        {
+            float t = i / (float)SR;
+            lp += (1f - Mathf.Exp(-2f * Mathf.PI * clickHz / SR)) * (n[i] - lp);
+            bp += (1f - Mathf.Exp(-2f * Mathf.PI * 700f / SR)) * (lp - bp);
+            float click = (lp - bp) * Mathf.Exp(-t * 900f);                       // down: sharp tick
+            float up = (lp - bp) * 0.35f * Mathf.Exp(-Mathf.Max(0f, t - upAt) * 1200f) * (t >= upAt ? 1f : 0f);
+            ph += 2f * Mathf.PI * Mathf.Lerp(thockHz * 1.3f, thockHz, Mathf.Clamp01(t / 0.01f)) / SR;
+            float thock = Mathf.Sin(ph) * Mathf.Exp(-t * (space ? 45f : 70f)) * Mathf.Clamp01(t / 0.0015f);
+            float rattle = space ? 0.25f * n[i] * Mathf.Exp(-t * 120f) : 0f;      // the long bar rattles a bit
+            s[i] = 1.2f * click + up + (space ? 0.8f : 0.55f) * thock + rattle;
+        }
+        return s;
+    }
+
+    static float[] KeyEnter()
+    {
+        // the return key: a firmer double click (the long key) with a fuller thock
+        var a = KeyClick(true);
+        var b = KeyClick(false);
+        var s = New(0.22f);
+        int off = (int)(0.012f * SR);
+        for (int i = 0; i < a.Length; i++) s[i] += a[i] * 0.9f;
+        for (int i = 0; i < b.Length && i + off < s.Length; i++) s[i + off] += b[i] * 0.6f;
+        return s;
+    }
+
+    static float[] LetterTheme(float sec)
+    {
+        // Music under the letter: tender and a little bittersweet. Am - F - C - G, slow piano and soft
+        // strings, a simple melody that rises at the end of each phrase (sad, then hopeful).
+        var s = New(sec);
+        float[][] chords =
+        {
+            new[] { 110f, 220f, 261.63f, 329.63f },      // Am
+            new[] { 87.31f, 174.61f, 220f, 261.63f },    // F
+            new[] { 130.81f, 196f, 261.63f, 329.63f },   // C
+            new[] { 98f, 196f, 246.94f, 293.66f },       // G
+        };
+        float bar = sec / 8f;
+        for (int b = 0; b < 8; b++)
+        {
+            var ch = chords[b % 4];
+            float t0 = b * bar;
+            var part = Pad(bar + 2f, ch, new[] { 0.6f, 0.45f, 0.35f, 0.25f }, 0.05f);
+            int off = (int)(t0 * SR);
+            for (int i = 0; i < part.Length; i++)
+            {
+                float t = i / (float)SR;
+                float env = Mathf.Clamp01(t / 1.5f) * Mathf.Clamp01((bar + 2f - t) / 2f);
+                s[(off + i) % s.Length] += 0.45f * part[i] * env;
+            }
+            AddPiano(s, t0, ch[0], 0.3f, 3f);
+            // slow rolling arpeggio: root - fifth - third - octave
+            float[] arp = { ch[1], ch[2], ch[3], ch[1] * 2f };
+            for (int k = 0; k < 8; k++) AddPiano(s, t0 + 0.3f + k * (bar - 0.4f) / 8f, arp[k % 4], 0.1f, 1.8f);
+        }
+        // melody: E - C - G - B (first time), E - F - G - C' (second time: rises, hopeful)
+        float[] m1 = { 659.25f, 523.25f, 783.99f, 493.88f };
+        float[] m2 = { 659.25f, 698.46f, 783.99f, 1046.5f };
+        for (int b = 0; b < 4; b++) AddPiano(s, b * bar + bar * 0.25f, m1[b], 0.17f, 2.6f);
+        for (int b = 0; b < 4; b++) AddPiano(s, (4 + b) * bar + bar * 0.25f, m2[b], 0.17f, 2.6f);
+        return s;
+    }
+
+    /// <summary>Piano-like note: a hammer tick, then harmonics that fade at different speeds.</summary>
+    static void AddPiano(float[] s, float at, float f, float amp, float sustain)
+    {
+        int a = (int)(at * SR);
+        for (int i = a; i < s.Length; i++)
+        {
+            float t = (i - a) / (float)SR;
+            float e = Mathf.Exp(-t / sustain) * Mathf.Clamp01(t / 0.003f);
+            if (t > 0.1f && e < 0.0004f) break;
+            float x = 0.6f * Sin(f, t) + 0.28f * Sin(f * 2.002f, t) * Mathf.Exp(-t * 1.5f)
+                    + 0.12f * Sin(f * 3.005f, t) * Mathf.Exp(-t * 3f) + 0.06f * Sin(f * 4.01f, t) * Mathf.Exp(-t * 5f);
+            s[i] += amp * e * x;
+        }
+    }
+
+    static float[] Finale(float sec)
+    {
+        // The ending theme: slow piano over warm strings. C - G - Am - F, twice; the second time the
+        // melody climbs higher, like letting the light in.
+        var s = New(sec);
+        float[][] chords =
+        {
+            new[] { 130.81f, 196f, 261.63f, 329.63f },   // C
+            new[] { 98f, 196f, 246.94f, 293.66f },       // G
+            new[] { 110f, 220f, 261.63f, 329.63f },      // Am
+            new[] { 87.31f, 174.61f, 261.63f, 349.23f }, // F
+        };
+        float bar = sec / 8f;
+        for (int b = 0; b < 8; b++)
+        {
+            var ch = chords[b % 4];
+            float t0 = b * bar;
+            // strings: a soft pad for the bar
+            var part = Pad(bar + 2f, ch, new[] { 0.7f, 0.5f, 0.4f, 0.3f }, 0.04f);
+            int off = (int)(t0 * SR);
+            for (int i = 0; i < part.Length; i++)
+            {
+                float t = i / (float)SR;
+                float env = Mathf.Clamp01(t / 1.2f) * Mathf.Clamp01((bar + 2f - t) / 2f);
+                s[(off + i) % s.Length] += 0.55f * part[i] * env;
+            }
+            // piano: bass note, then a gentle broken chord
+            AddPiano(s, t0, ch[0], 0.32f, 2.6f);
+            float[] arp = { ch[1], ch[2], ch[3], ch[2] * 2f, ch[3], ch[2] };
+            for (int k = 0; k < arp.Length; k++) AddPiano(s, t0 + 0.5f + k * (bar - 0.8f) / arp.Length, arp[k], 0.13f, 1.6f);
+        }
+        // melody (one note or two per bar), higher the second time round
+        float[] mel1 = { 659.25f, 587.33f, 523.25f, 523.25f };
+        float[] mel2 = { 783.99f, 783.99f, 880f, 698.46f };
+        float[] mel2b = { 659.25f, 587.33f, 659.25f, 659.25f };
+        for (int b = 0; b < 4; b++) AddPiano(s, b * bar + 0.2f, mel1[b], 0.2f, 2.2f);
+        for (int b = 0; b < 4; b++)
+        {
+            AddPiano(s, (4 + b) * bar + 0.2f, mel2[b], 0.2f, 2.2f);
+            AddPiano(s, (4 + b) * bar + bar * 0.55f, mel2b[b], 0.15f, 2f);
         }
         return s;
     }

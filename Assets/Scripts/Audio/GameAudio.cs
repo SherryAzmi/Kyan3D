@@ -41,9 +41,20 @@ public class GameAudio : MonoBehaviour
     public AudioClip[] grassSteps; // footsteps in the forest
     public AudioClip fall;         // whoosh while falling into a hole
     public AudioClip hurt;         // damage thud when put back after falling
+    public AudioClip throwItem;    // tossing something into the river
+    public AudioClip respawn;      // shimmer when a player is put back at the start
+    public AudioClip message;      // soft chime when a new on-screen message appears
+    public AudioClip[] penStrokes; // (old) pen on paper; replaced by the keyboard below
+    public AudioClip[] typeKeys;   // keyboard key clicks while a letter is being written
+    public AudioClip typeSpace;    // space bar
+    public AudioClip typeEnter;    // return key at the end of a line
 
     [Header("Ending")]
     public AudioClip endingMusic;
+    [Tooltip("The last scene (the mirror made whole): its own piano theme.")]
+    public AudioClip finaleMusic;
+    [Tooltip("Tender piano that plays while a Mirror Fragment letter is written.")]
+    public AudioClip letterMusic;
 
     [Tooltip("World X above which a sound counts as the forest (right screen).")]
     public float forestMinX = 150f;

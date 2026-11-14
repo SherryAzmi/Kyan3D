@@ -149,8 +149,7 @@ public class BridgePuzzle : MonoBehaviour
     static Vector3? RiverPointNear(MemoryRiver river, Vector3 p)
     {
         if (!river) return null;
-        float z = Mathf.Clamp(river.transform.InverseTransformPoint(p).z, river.zMin + 1f, river.zMax - 1f);
-        return river.transform.TransformPoint(new Vector3(0f, 0f, z));
+        return river.NearBankPoint(p); // the near edge, right in front of the player
     }
 
     // ---------------------------------------------------------------- events

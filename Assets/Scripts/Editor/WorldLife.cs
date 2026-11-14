@@ -53,6 +53,7 @@ public static class WorldLife
             if (root.name.Contains("FOREST")) res += Forest(root.transform, scene);
             else res += Desert(root.transform, scene, GroundArt.Level(scene));
         }
+        res += NeonLighting.ApplyOpenScene();
         AssetDatabase.SaveAssets();
         return res;
     }

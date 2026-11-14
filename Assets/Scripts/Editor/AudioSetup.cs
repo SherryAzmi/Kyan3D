@@ -63,7 +63,17 @@ public static class AudioSetup
         a.pickup = SoundSynth.Load("sfx_pickup");
         a.drop = SoundSynth.Load("sfx_drop");
         a.splash = SoundSynth.Load("sfx_splash");
-        a.arrive = SoundSynth.Load("sfx_arrive");
+        a.arrive = SoundSynth.Load("sfx_arrive_neon");
+        a.throwItem = SoundSynth.Load("sfx_throw");
+        a.respawn = SoundSynth.Load("sfx_respawn");
+        a.message = SoundSynth.Load("sfx_message");
+        a.penStrokes = new[] { SoundSynth.Load("sfx_pen_1"), SoundSynth.Load("sfx_pen_2"), SoundSynth.Load("sfx_pen_3"), SoundSynth.Load("sfx_pen_4") };
+        a.finaleMusic = SoundSynth.Load("music_finale");
+        a.letterMusic = SoundSynth.Load("music_letter");
+        a.typeKeys = new AudioClip[6];
+        for (int v = 1; v <= 6; v++) a.typeKeys[v - 1] = SoundSynth.Load("sfx_key_" + v);
+        a.typeSpace = SoundSynth.Load("sfx_key_space");
+        a.typeEnter = SoundSynth.Load("sfx_key_enter");
         a.place = SoundSynth.Load("sfx_place");
         a.grow = SoundSynth.Load("sfx_grow_loop");
         a.bridgeDone = SoundSynth.Load("sfx_bridge_done");
