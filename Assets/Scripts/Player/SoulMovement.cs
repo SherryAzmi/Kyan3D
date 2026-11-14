@@ -15,9 +15,14 @@ public class SoulMovement : MonoBehaviour
     public float turnSpeed = 720f;   // degrees per second
     public float jumpHeight = 1.2f;
     public float gravity = -20f;
+    [Tooltip("A jump pressed this long before landing still happens when you land (seconds).")]
+    public float jumpBuffer = 0.15f;
+    [Tooltip("You can still jump this long after walking off an edge or a bump (seconds).")]
+    public float coyoteTime = 0.12f;
 
     CharacterController cc;
     float verticalVelocity;
+    float lastJumpPress = -99f, lastGrounded = -99f;
 
     void Awake() => cc = GetComponent<CharacterController>();
 
@@ -38,11 +43,20 @@ public class SoulMovement : MonoBehaviour
             transform.rotation = Quaternion.RotateTowards(transform.rotation, target, turnSpeed * Time.deltaTime);
         }
 
+        // Forgiving jump: remember the press for a moment and allow it shortly after leaving the ground,
+        // so a jump is never "eaten" by a frame where the controller briefly isn't grounded.
+        if (input != null && input.JumpPressed) lastJumpPress = Time.time;
         if (cc.isGrounded)
         {
+            lastGrounded = Time.time;
             if (verticalVelocity < 0) verticalVelocity = -2f;
-            if (input != null && input.JumpPressed)
-                verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
+        }
+        bool canJump = Time.time - lastGrounded <= coyoteTime && verticalVelocity <= 0f;
+        if (canJump && Time.time - lastJumpPress <= jumpBuffer)
+        {
+            verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            lastJumpPress = -99f;
+            lastGrounded = -99f;
         }
         verticalVelocity += gravity * Time.deltaTime;
         move.y = verticalVelocity;

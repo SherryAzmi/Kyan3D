@@ -74,6 +74,10 @@ public static class AudioSetup
         a.click = SoundSynth.Load("sfx_click");
         a.waterFlow = SoundSynth.Load("sfx_water_flow");
         a.waterStep = SoundSynth.Load("sfx_water_step");
+        a.fall = SoundSynth.Load("sfx_fall");
+        a.hurt = SoundSynth.Load("sfx_hurt");
+        a.sandSteps = new[] { SoundSynth.Load("sfx_step_sand_1"), SoundSynth.Load("sfx_step_sand_2"), SoundSynth.Load("sfx_step_sand_3"), SoundSynth.Load("sfx_step_sand_4") };
+        a.grassSteps = new[] { SoundSynth.Load("sfx_step_grass_1"), SoundSynth.Load("sfx_step_grass_2"), SoundSynth.Load("sfx_step_grass_3"), SoundSynth.Load("sfx_step_grass_4") };
         a.endingMusic = SoundSynth.Load("music_ending");
         return a;
     }

@@ -243,6 +243,9 @@ public static partial class BridgePuzzleBuilder
         AudioSetup.AddGameAudio();
         ModelDresser.DressOpenScene();
         CharacterSetup.PlaceCharacters();
+        GroundArt.ApplyOpenScene();
+        WorldLife.ApplyOpenScene();
+        ChildPhoto.PlaceInFrame(); // the Future as a little boy, in the broken picture frame
 
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);

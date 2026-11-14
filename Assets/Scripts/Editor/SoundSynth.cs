@@ -52,6 +52,10 @@ public static class SoundSynth
         Save("sfx_click", Click(), 0.6f);
         Save("sfx_water_flow", Loop(WaterFlow(3f), 0.5f), 0.6f);
         Save("sfx_water_step", WaterStep(), 0.7f);
+        for (int v = 1; v <= 4; v++) Save("sfx_step_sand_" + v, SandStep(), 0.6f);
+        for (int v = 1; v <= 4; v++) Save("sfx_step_grass_" + v, GrassStep(), 0.55f);
+        Save("sfx_fall", FallWhoosh(), 0.7f);
+        Save("sfx_hurt", Reverb(Hurt(), 0.2f), 0.95f);
 
         AssetDatabase.Refresh();
         Debug.Log($"[SoundSynth] Sounds written to {Dir}.");
@@ -439,6 +443,87 @@ public static class SoundSynth
         }
         return s;
     }
+
+    static float[] FallWhoosh()
+    {
+        // air rushing past, getting louder and lower as you drop
+        var s = New(1.1f);
+        var n = White(s.Length);
+        float lp = 0f;
+        for (int i = 0; i < s.Length; i++)
+        {
+            float t = i / (float)SR;
+            float cutoff = Mathf.Lerp(2200f, 500f, t / 1.1f);
+            lp += (1f - Mathf.Exp(-2f * Mathf.PI * cutoff / SR)) * (n[i] - lp);
+            float env = Mathf.Clamp01(t / 0.6f) * Mathf.Clamp01((1.1f - t) / 0.15f);
+            s[i] = lp * env * (0.8f + 0.2f * Mathf.Sin(t * 37f));
+        }
+        return s;
+    }
+
+    static float[] Hurt()
+    {
+        // a heavy body thud plus a short falling "damage" tone
+        var s = New(0.75f);
+        var crunch = LowPass(White(s.Length), 1200f);
+        float ph = 0f, ph2 = 0f;
+        for (int i = 0; i < s.Length; i++)
+        {
+            float t = i / (float)SR;
+            float thud = Mathf.Sin(2f * Mathf.PI * Mathf.Lerp(90f, 38f, Mathf.Clamp01(t / 0.2f)) * t) * Mathf.Exp(-t * 9f);
+            float f = Mathf.Lerp(330f, 120f, Mathf.Clamp01(t / 0.45f));
+            ph += 2f * Mathf.PI * f / SR;
+            ph2 += 2f * Mathf.PI * f * 1.5f / SR;
+            // soft square-ish tone = the "you got hurt" sting
+            float tone = (Mathf.Sin(ph) + 0.33f * Mathf.Sin(3f * ph) + 0.25f * Mathf.Sin(ph2)) * Env(t - 0.02f, 0.01f, 5f);
+            s[i] = 0.9f * thud + 0.45f * crunch[i] * Mathf.Exp(-t * 18f) + 0.35f * tone;
+        }
+        return s;
+    }
+
+    static float[] SandStep()
+    {
+        // heel then toe pressing into dry sand: a soft muffled crunch made of many tiny grain clicks
+        var s = New(0.32f);
+        var body = LowPass(HighPass(White(s.Length), 300f), 2600f);
+        float heel = 0f, toe = 0.07f + (float)rnd.NextDouble() * 0.03f;
+        for (int i = 0; i < s.Length; i++)
+        {
+            float t = i / (float)SR;
+            float e = Env(t - heel, 0.008f, 14f) + 0.75f * Env(t - toe, 0.01f, 12f);
+            s[i] = body[i] * e * 0.8f + 0.25f * Mathf.Sin(2f * Mathf.PI * 70f * t) * Env(t - heel, 0.004f, 30f);
+        }
+        var grains = HighPass(White(s.Length), 2500f);
+        for (int k = 0; k < 60; k++)
+        {
+            float at = (float)rnd.NextDouble() * 0.2f;
+            int a = (int)(at * SR), len = (int)(0.002f * SR + rnd.Next(60));
+            float amp = 0.15f + (float)rnd.NextDouble() * 0.3f;
+            for (int i = 0; i < len && a + i < s.Length; i++) s[a + i] += grains[a + i] * amp * (1f - i / (float)len);
+        }
+        return s;
+    }
+
+    static float[] GrassStep()
+    {
+        // foot brushing through grass: a quick airy rustle with a soft thud underneath
+        var s = New(0.36f);
+        var rustle = HighPass(LowPass(White(s.Length), 7000f), 1800f);
+        float second = 0.05f + (float)rnd.NextDouble() * 0.04f;
+        float seed = (float)rnd.NextDouble() * 50f;
+        for (int i = 0; i < s.Length; i++)
+        {
+            float t = i / (float)SR;
+            float flutter = 0.55f + 0.45f * Mathf.PerlinNoise(t * 140f, seed);
+            float e = Env(t, 0.015f, 9f) + 0.6f * Env(t - second, 0.02f, 10f);
+            s[i] = rustle[i] * e * flutter * 0.7f + 0.3f * Mathf.Sin(2f * Mathf.PI * 85f * t) * Env(t, 0.005f, 28f);
+        }
+        return s;
+    }
+
+    /// <summary>Attack-decay envelope: 0 before t=0, rises over 'attack' seconds, then decays.</summary>
+    static float Env(float t, float attack, float decay) =>
+        t < 0f ? 0f : Mathf.Clamp01(t / attack) * Mathf.Exp(-Mathf.Max(0f, t - attack) * decay);
 
     static float[] WaterStep()
     {
