@@ -55,8 +55,12 @@ public class MirrorCutscene : MonoBehaviour
     {
         "Not good enough.", "Why even try?", "You always fail.", "Look at you.",
         "You'll never change.", "Everyone is tired of you.", "Too late.", "Who are you?",
-        "Worthless.", "You're a disappointment.", "Stop pretending.", "You ruined it."
+        "Worthless.", "You're a disappointment.", "Stop pretending.", "You ruined it.",
+        "I feel worthless.", "I feel like I'm useless."
     };
+    [Tooltip("One thought that stays a while: bigger, slower, near the middle of the frame. Shown twice.")]
+    public string lingeringThought = "What is the meaning of my life?";
+    public float lingeringLife = 5.5f;
     public Color thoughtColor = new Color(0.8f, 0.12f, 0.14f);
     public Color thoughtColorAlt = new Color(0.75f, 0.75f, 0.8f);
 
@@ -67,7 +71,7 @@ public class MirrorCutscene : MonoBehaviour
     public float captionHoldTime = 2.5f;
 
     [Header("Caption shown on black before the split screen")]
-    [TextArea] public string caption = "...and the pieces fell into two worlds.";
+    [TextArea] public string caption = "...and then I fell in between the worlds of consciousness.";
 
     [Header("Audio (optional, can stay empty)")]
     public AudioSource sfx;
@@ -84,6 +88,9 @@ public class MirrorCutscene : MonoBehaviour
     [Header("Next scene (must be in Build Profiles scene list)")]
     public string nextScene = "SplitCamera";
 
+    [Tooltip("Optional: plays first (ordering coffee in the café), then the mirror scene as before.")]
+    public CafePrelude prelude;
+
     class Thought
     {
         public Transform t;
@@ -96,6 +103,19 @@ public class MirrorCutscene : MonoBehaviour
     readonly List<Thought> live = new List<Thought>();
     readonly List<GameObject> crackSegments = new List<GameObject>();
     Font font;
+    Material thoughtMat;
+    /// <summary>Every thought stays fully visible at least this long before it fades.</summary>
+    const float ReadTime = 1.5f;
+
+    /// <summary>The font material, drawn on top of everything (so heads, the mirror frame or walls never cut a thought off).</summary>
+    Material ThoughtMaterial()
+    {
+        if (thoughtMat) return thoughtMat;
+        thoughtMat = new Material(font.material);
+        thoughtMat.SetFloat("unity_GUIZTestMode", (float)UnityEngine.Rendering.CompareFunction.Always);
+        thoughtMat.renderQueue = 4000;
+        return thoughtMat;
+    }
     Transform crackRoot;
     Vector3 camPos;
     Quaternion camRot;
@@ -106,6 +126,7 @@ public class MirrorCutscene : MonoBehaviour
     float headBow;
     bool headAnimated;
     Vector3 charBaseScale, charBasePos;
+    bool inPrelude;
     Coroutine main;
     bool ending;
     float fixedDtBase;
@@ -170,6 +191,14 @@ public class MirrorCutscene : MonoBehaviour
 
     IEnumerator Run()
     {
+        // 0. (Café) He orders a coffee, stares at the sign on the wall, walks to the mirror; ends on black.
+        if (prelude && prelude.isActiveAndEnabled)
+        {
+            inPrelude = true; // the prelude drives the camera and the character itself
+            yield return prelude.Play(this);
+            inPrelude = false;
+        }
+
         // 1. Fade in on the sad face, slow push-in.
         yield return null;   // let the character's idle pose apply, then frame the face where the head really is
         AimFaceShot();
@@ -186,6 +215,7 @@ public class MirrorCutscene : MonoBehaviour
         // 3. The thoughts.
         int crackShown = 0;
         float elapsed = 0f, nextSpawn = 0f, nextBeat = 0f;
+        int lingerShown = 0;
         while (elapsed < thoughtsTime)
         {
             float k = elapsed / thoughtsTime;
@@ -203,11 +233,14 @@ public class MirrorCutscene : MonoBehaviour
                 nextBeat = elapsed + Mathf.Lerp(1.1f, 0.42f, k);
             }
 
+            // the question that stays: early on, and again when the noise is loudest
+            if (lingerShown == 0 && k >= 0.06f || lingerShown == 1 && k >= 0.55f) { SpawnThought(k, lingeringThought, true); lingerShown++; }
+
             if (elapsed >= nextSpawn)
             {
                 SpawnThought(k);
-                if (k > 0.6f) SpawnThought(k); // they start piling on
-                nextSpawn = elapsed + Mathf.Lerp(0.9f, 0.12f, k);
+                if (k > 0.75f && live.Count < 14) SpawnThought(k); // they start piling on
+                nextSpawn = elapsed + Mathf.Lerp(0.85f, 0.22f, k); // slow enough that each one can be read
             }
 
             SetSmoke(Mathf.Lerp(4f, 90f, k));
@@ -296,7 +329,8 @@ public class MirrorCutscene : MonoBehaviour
             StartCoroutine(End(true));
         }
 
-        // Camera with shake.
+        // Camera with shake (not during the café prelude, which moves the camera and him itself).
+        if (inPrelude) { UpdateThoughts(); return; }
         if (cam)
         {
             float t = Time.unscaledTime;
@@ -341,31 +375,35 @@ public class MirrorCutscene : MonoBehaviour
 
     // ------------------------------------------------------------------ thoughts
 
-    void SpawnThought(float k)
+    void SpawnThought(float k, string text = null, bool linger = false)
     {
         if (thoughts == null || thoughts.Length == 0 || !head) return;
 
         var go = new GameObject("Thought");
         var tm = go.AddComponent<TextMesh>();
-        tm.text = thoughts[Random.Range(0, thoughts.Length)];
+        if (linger && string.IsNullOrEmpty(text)) return;
+        tm.text = text ?? thoughts[Random.Range(0, thoughts.Length)];
         tm.font = font;
         tm.fontSize = 96;
-        tm.characterSize = Random.Range(0.006f, 0.011f) * (1f + k * 0.7f);
+        tm.characterSize = linger ? 0.0085f : Random.Range(0.006f, 0.011f) * (1f + k * 0.7f);
         tm.anchor = TextAnchor.MiddleCenter;
         tm.alignment = TextAlignment.Center;
-        go.GetComponent<MeshRenderer>().sharedMaterial = font.material;
+        go.GetComponent<MeshRenderer>().sharedMaterial = ThoughtMaterial();
 
         Vector3 headPos = head.position + Vector3.up * 0.17f;
-        Vector3 offset = new Vector3(Random.Range(-1.0f, 1.0f), Random.Range(-0.3f, 0.75f), Random.Range(0.05f, 1.2f));
+        Vector3 offset = linger ? new Vector3(Random.Range(-0.15f, 0.15f), 0.42f, 0.6f)
+                                : new Vector3(Random.Range(-1.0f, 1.0f), Random.Range(-0.3f, 0.75f), Random.Range(0.05f, 1.2f));
         go.transform.position = headPos + offset;
+        if (linger && cam) // centred near the top of the frame, a fixed distance from the camera
+            go.transform.position = cam.transform.position + cam.transform.forward * 1.9f + cam.transform.up * 0.36f;
 
         var th = new Thought
         {
             t = go.transform,
             tm = tm,
-            color = Random.value < 0.65f ? thoughtColor : thoughtColorAlt,
-            vel = (offset.normalized * 0.12f + Vector3.up * 0.05f) * Random.Range(0.5f, 1.5f),
-            life = Random.Range(2.5f, 4f),
+            color = linger ? new Color(0.92f, 0.9f, 0.95f) : Random.value < 0.65f ? thoughtColor : thoughtColorAlt,
+            vel = linger ? Vector3.up * 0.01f : (offset.normalized * 0.12f + Vector3.up * 0.05f) * Random.Range(0.5f, 1.5f),
+            life = linger ? lingeringLife : Random.Range(ReadTime + 0.85f, ReadTime + 2f),
             seed = Random.value * 100f
         };
         tm.color = new Color(th.color.r, th.color.g, th.color.b, 0f);
@@ -383,8 +421,9 @@ public class MirrorCutscene : MonoBehaviour
             th.age += Time.deltaTime;
             if (th.age >= th.life) { Destroy(th.t.gameObject); live.RemoveAt(i); continue; }
 
-            float a = Mathf.Clamp01(th.age / 0.4f) * Mathf.Clamp01((th.life - th.age) / 0.6f);
-            a *= 0.7f + 0.3f * Mathf.PerlinNoise(th.seed, Time.time * 8f); // flicker
+            // quick fade in, then fully there for at least ReadTime, then fade out
+            float a = Mathf.Clamp01(th.age / 0.25f) * Mathf.Clamp01((th.life - th.age) / 0.6f);
+            a *= 0.88f + 0.12f * Mathf.PerlinNoise(th.seed, Time.time * 8f); // a slight flicker
             th.tm.color = new Color(th.color.r, th.color.g, th.color.b, a);
 
             Vector3 jitter = new Vector3(Mathf.PerlinNoise(th.seed, Time.time * 15f) - 0.5f,

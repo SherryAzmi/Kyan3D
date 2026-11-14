@@ -57,6 +57,8 @@ public class MirrorEnding : MonoBehaviour
 
     [Header("Play again loads this scene")]
     public string firstScene = "Cutscene";
+    [Tooltip("After the closing message, load this scene (the café ending). Empty = show Play again / Quit here.")]
+    public string thenLoad = "CafeEnding";
 
     bool playing;
     float camT, camDuration = 30f;
@@ -162,6 +164,17 @@ public class MirrorEnding : MonoBehaviour
         // 6. Closing message, then the buttons.
         yield return new WaitForSeconds(0.6f);
         yield return Fade(closingText, 0f, 1f, 2f);
+
+        // 7. Then the café: he wakes up at the mirror, takes a coffee, sits down. "The End" is there.
+        if (!string.IsNullOrEmpty(thenLoad) && Application.CanStreamedLevelBeLoaded(thenLoad))
+        {
+            yield return new WaitForSeconds(3.5f);
+            yield return Fade(whiteImage, 0f, 1f, 2f);
+            yield return new WaitForSeconds(0.3f);
+            SceneManager.LoadScene(thenLoad);
+            yield break;
+        }
+
         yield return new WaitForSeconds(1.5f);
         if (buttons)
         {

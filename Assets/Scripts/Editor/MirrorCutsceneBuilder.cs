@@ -129,7 +129,7 @@ public static class MirrorCutsceneBuilder
         var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         var caption = MakeText("Caption", canvasGo.transform, font, 44, FontStyle.Italic, TextAnchor.MiddleCenter,
                                new Color(0.85f, 0.85f, 0.9f, 0f), Vector2.zero, Vector2.one, Vector2.zero);
-        caption.text = "...and the pieces fell into two worlds.";
+        caption.text = "...and then I fell in between the worlds of consciousness.";
         var hint = MakeText("SkipHint", canvasGo.transform, font, 22, FontStyle.Normal, TextAnchor.LowerRight,
                             new Color(1f, 1f, 1f, 0.4f), new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-30f, 24f));
         hint.rectTransform.sizeDelta = new Vector2(500f, 40f);
@@ -163,6 +163,7 @@ public static class MirrorCutsceneBuilder
         d.nextScene = "SplitCamera";
         AudioSetup.WireCutscene(d);
         CharacterSetup.PlaceCharacters();
+        CafeBuilder.DressOpening(); // the room is the night café (replaces the plain floor and back wall)
 
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
