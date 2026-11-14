@@ -10221,7 +10221,7 @@ Transform:
   m_GameObject: {fileID: 496502696}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.5, z: 25}
+  m_LocalPosition: {x: 0, y: -0.06, z: 25}
   m_LocalScale: {x: 80, y: 1, z: 30}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -15756,6 +15756,7 @@ GameObject:
   m_Component:
   - component: {fileID: 783721100}
   - component: {fileID: 783721101}
+  - component: {fileID: 783721102}
   m_Layer: 0
   m_Name: Spring Glow
   m_TagString: Untagged
@@ -15843,6 +15844,35 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!114 &783721102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 783721099}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1001 &790473312
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -32346,7 +32376,7 @@ Transform:
   m_GameObject: {fileID: 1515181677}
   serializedVersion: 2
   m_LocalRotation: {x: 0.15646996, y: 0, z: 0, w: 0.98768276}
-  m_LocalPosition: {x: 905, y: 3.0321712, z: -19.099}
+  m_LocalPosition: {x: 300, y: 3.0321712, z: -19.099}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -32460,7 +32490,7 @@ Camera:
     width: 0.5
     height: 1
   near clip plane: 0.1
-  far clip plane: 120
+  far clip plane: 500
   field of view: 60
   orthographic: 0
   orthographic size: 10
@@ -34392,7 +34422,7 @@ Transform:
   m_GameObject: {fileID: 1624364383}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.5, z: 25}
+  m_LocalPosition: {x: 0, y: -0.5, z: 24.9}
   m_LocalScale: {x: 80, y: 1, z: 30}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -35895,6 +35925,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1690739564}
   - component: {fileID: 1690739565}
+  - component: {fileID: 1690739566}
   m_Layer: 0
   m_Name: Glow Light
   m_TagString: Untagged
@@ -35982,6 +36013,35 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!114 &1690739566
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1690739563}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &1695828932
 GameObject:
   m_ObjectHideFlags: 0
@@ -36010,7 +36070,7 @@ Transform:
   m_GameObject: {fileID: 1695828932}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.5, z: -18}
+  m_LocalPosition: {x: 0, y: -0.5, z: -17.8}
   m_LocalScale: {x: 80, y: 1, z: 44}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -36871,7 +36931,7 @@ Transform:
   m_GameObject: {fileID: 1737643224}
   serializedVersion: 2
   m_LocalRotation: {x: 0.15646988, y: 1.7513746e-11, z: -1.6498261e-12, w: 0.98768276}
-  m_LocalPosition: {x: 905, y: 3.3995938, z: -20.23081}
+  m_LocalPosition: {x: 300, y: 3.3995938, z: -20.23081}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -37611,6 +37671,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1764506266}
   - component: {fileID: 1764506267}
+  - component: {fileID: 1764506268}
   m_Layer: 0
   m_Name: Glow Light
   m_TagString: Untagged
@@ -37698,6 +37759,35 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!114 &1764506268
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1764506265}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &1765752614
 GameObject:
   m_ObjectHideFlags: 0
@@ -39880,7 +39970,7 @@ Transform:
   m_GameObject: {fileID: 1866020893}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.5, z: -18}
+  m_LocalPosition: {x: 0, y: -0.5, z: -17.94}
   m_LocalScale: {x: 80, y: 1, z: 44}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -43210,7 +43300,7 @@ Camera:
     width: 0.5
     height: 1
   near clip plane: 0.1
-  far clip plane: 120
+  far clip plane: 500
   field of view: 60
   orthographic: 0
   orthographic size: 10
