@@ -112,6 +112,7 @@ public class DryBedPuzzle : MonoBehaviour
         {
             fill = Mathf.Clamp01(fill + Time.deltaTime / fillTime);
             SetFill(fill);
+            MirrorCrackDivider.Hold(0.5f);
             var a = GameAudio.I;
             if (a)
             {
@@ -207,6 +208,7 @@ public class DryBedPuzzle : MonoBehaviour
         if (gateOpened) return;
         gateOpened = true;
         filling = true;
+        MirrorCrackDivider.Pulse(1.3f);
         if (GameAudio.I) { GameAudio.Play(GameAudio.I.splash, 1); GameAudio.Play(GameAudio.I.splash, 0, 0.6f); }
         if (springGate) StartCoroutine(Sink(springGate, gateDropDepth, 1.5f));
         if (springGlow) StartCoroutine(PulseLight(springGlow, springGlow.intensity, springGlowBase, 2f));
@@ -261,6 +263,7 @@ public class DryBedPuzzle : MonoBehaviour
     public void OnFramePlaced()
     {
         framePlaced = true;
+        MirrorCrackDivider.Pulse(1.2f);
         hud?.ShowMessage(1, "The frame fits. The roots around the altar loosen...", 5f);
         hud?.ShowMessage(0, "The ground trembles...", 3f);
         StartCoroutine(OpenCage());

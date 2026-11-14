@@ -172,6 +172,7 @@ public class BridgePuzzle : MonoBehaviour
             memorySeed.PlaceAt(new Vector3(p.x, 0.35f, p.z)); // ground level, not the sunken mound
         }
         if (rootSocket) rootSocket.Wake();
+        MirrorCrackDivider.Pulse(1f);
         hud?.ShowMessage(0, "A glowing seed was buried here. Maybe the river can carry it...", 6f);
         hud?.ShowMessage(1, "The stone socket by the gap starts to hum...", 5f);
     }
@@ -194,6 +195,12 @@ public class BridgePuzzle : MonoBehaviour
     /// <summary>0..1 — roots extend in the forest, path stones rise in the desert, at the same time.</summary>
     public void SetBridgeGrowth(float k)
     {
+        if (k > 0f && k < 1f) MirrorCrackDivider.Hold(0.3f + 0.7f * k); // light grows with the bridge
+        SetBridgeGrowthInternal(k);
+    }
+
+    void SetBridgeGrowthInternal(float k)
+    {
         for (int i = 0; i < bridgeRoots.Length; i++)
         {
             var s = bridgeRoots[i].localScale;
@@ -215,6 +222,7 @@ public class BridgePuzzle : MonoBehaviour
     public void OnBridgeComplete()
     {
         bridgeDone = true;
+        MirrorCrackDivider.Pulse(1.5f);
         SetBridgeGrowth(1f);
         if (desertBridgeWalkway) desertBridgeWalkway.enabled = true;
         if (forestBridgeWalkway) forestBridgeWalkway.enabled = true;

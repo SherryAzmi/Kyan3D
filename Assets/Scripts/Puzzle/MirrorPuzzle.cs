@@ -144,6 +144,7 @@ public class MirrorPuzzle : MonoBehaviour
     public void OnHalfPlaced(int world, Carryable c)
     {
         placed[world] = true;
+        MirrorCrackDivider.Pulse(1.2f);
         if (c) c.gameObject.SetActive(false);
         if (GameAudio.I)
         {
@@ -177,6 +178,7 @@ public class MirrorPuzzle : MonoBehaviour
             if (a && b)
             {
                 JoinProgress = Mathf.Clamp01(JoinProgress + Time.deltaTime / joinTime);
+                MirrorCrackDivider.Hold(JoinProgress);
                 if (GameAudio.I) GameAudio.Hold("join", GameAudio.I.joinHum, -1, 0.8f + 0.7f * JoinProgress, 0.6f + 0.4f * JoinProgress);
                 foreach (var m in mirrors) if (m.glow) m.glow.intensity = 1f + 5f * JoinProgress;
                 if (JoinProgress >= 1f) Join();
@@ -193,6 +195,7 @@ public class MirrorPuzzle : MonoBehaviour
     void Join()
     {
         Joined = true;
+        MirrorCrackDivider.Pulse(2f);
         if (GameAudio.I) GameAudio.Play(GameAudio.I.mirrorWhole);
         foreach (var m in mirrors) if (m.seam) m.seam.SetActive(false);
         if (desertBeacon) desertBeacon.SetTarget(null);

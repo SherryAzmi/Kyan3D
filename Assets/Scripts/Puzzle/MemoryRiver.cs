@@ -49,6 +49,7 @@ public class MemoryRiver : Interactable
             if (other) GameAudio.Play(a.splash, other.transform.position, 0.5f); // the echo in the other world
         }
         onTouched?.Invoke(this, z, carrying);
+        MirrorCrackDivider.Pulse(carrying ? 1.2f : 0.8f); // the crack flares: something reached the other world
 
         if (p.Carried && other)
         {
