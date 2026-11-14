@@ -172,7 +172,7 @@ public static class SplitCameraSceneBuilder
         var cam = go.AddComponent<Camera>();
         cam.rect = rect;
         cam.nearClipPlane = 0.1f;
-        cam.farClipPlane = 500f;
+        cam.farClipPlane = 120f; // never see the other world (300 m away)
         go.AddComponent<UniversalAdditionalCameraData>();
         var brain = go.AddComponent<CinemachineBrain>();
         brain.ChannelMask = channel; // this brain only "sees" its own player's CinemachineCamera
@@ -190,7 +190,7 @@ public static class SplitCameraSceneBuilder
         vcam.LookAt = target;
         vcam.OutputChannel = channel;
         var lens = vcam.Lens;
-        lens.FieldOfView = 60f; lens.NearClipPlane = 0.1f; lens.FarClipPlane = 500f;
+        lens.FieldOfView = 60f; lens.NearClipPlane = 0.1f; lens.FarClipPlane = 120f;
         vcam.Lens = lens;
 
         var orb = go.AddComponent<CinemachineOrbitalFollow>();
