@@ -31,6 +31,7 @@ public class FramePedestal : Interactable
         item.transform.localPosition = Vector3.zero;
         item.transform.localRotation = Quaternion.identity;
         if (glow && awakeMaterial) glow.sharedMaterial = awakeMaterial;
+        if (GameAudio.I) GameAudio.Play(GameAudio.I.place, transform.position);
         if (DryBedPuzzle.Instance) DryBedPuzzle.Instance.OnFramePlaced();
     }
 }

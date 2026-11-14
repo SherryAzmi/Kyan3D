@@ -234,12 +234,15 @@ public static partial class BridgePuzzleBuilder
 
         // ---------- fragment 2 cutscene: the Future, in the forest ----------
         var fc = BuildFragmentCutscene(flower, petals, flowerLight, futureGo, sun ? sun.GetComponent<Light>() : null, hud);
-        fc.header = "Mirror Fragment 2 of 5  ·  Accepting the past";
+        fc.header = "Mirror Fragment 2 of 3  ·  Accepting the past";
         fc.note = "It happened. I can't change it.\nI can carry it without letting it carry me.\nThe past is part of me, and it is not all of me.";
         fc.nextScene = "Puzzle3";
         fc.rippleMaterial = mRipple;
         if (fc.cinematicCam) fc.cinematicCam.backgroundColor = new Color(0.55f, 0.78f, 0.88f);
         puzzle.fragmentCutscene = fc;
+        AudioSetup.AddGameAudio();
+        ModelDresser.DressOpenScene();
+        CharacterSetup.PlaceCharacters();
 
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);

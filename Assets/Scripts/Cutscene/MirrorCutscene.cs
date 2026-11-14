@@ -103,6 +103,8 @@ public class MirrorCutscene : MonoBehaviour
     float distress;
     float[] lightBase;
     Quaternion headBase;
+    float headBow;
+    bool headAnimated;
     Vector3 charBaseScale, charBasePos;
     Coroutine main;
     bool ending;
@@ -144,6 +146,7 @@ public class MirrorCutscene : MonoBehaviour
         lightBase = new float[roomLights.Length];
         for (int i = 0; i < roomLights.Length; i++) lightBase[i] = roomLights[i] ? roomLights[i].intensity : 0f;
         headBase = head ? head.localRotation : Quaternion.identity;
+        headAnimated = head && head.GetComponentInParent<Animator>();
         if (character) { charBaseScale = character.localScale; charBasePos = character.localPosition; }
 
         SetAlpha(fadeImage, 1f);
@@ -210,7 +213,8 @@ public class MirrorCutscene : MonoBehaviour
                 if (roomLights[i]) roomLights[i].intensity = lightBase[i] * Mathf.Lerp(1f, 0.3f, k);
             if (darkVolume) darkVolume.weight = Mathf.Lerp(0.15f, 1f, k);
             shake = Mathf.Lerp(0f, 0.035f, k * k);
-            if (head) head.localRotation = headBase * Quaternion.Euler(Mathf.Lerp(0f, 18f, k), 0f, 0f);
+            headBow = Mathf.Lerp(0f, 18f, k);
+            if (head && !headAnimated) head.localRotation = headBase * Quaternion.Euler(headBow, 0f, 0f);
 
             // Cracks spread over the last 45 %.
             int crackTarget = Mathf.FloorToInt(Mathf.InverseLerp(0.55f, 1f, k) * crackSegments.Count);
@@ -310,9 +314,18 @@ public class MirrorCutscene : MonoBehaviour
                                           Mathf.PerlinNoise(2f, Time.time * 20f) - 0.5f) * 0.02f * distress;
             character.localPosition = charBasePos + tremble;
         }
-        if (head && reflectionHead) reflectionHead.localRotation = head.localRotation;
+        if (head && reflectionHead && !headAnimated) reflectionHead.localRotation = head.localRotation;
 
         UpdateThoughts();
+    }
+
+    // With a rigged, animated character the bow is added on top of the animation, after it has run.
+    void LateUpdate()
+    {
+        if (!headAnimated || headBow <= 0.01f) return;
+        if (head && character) head.rotation = Quaternion.AngleAxis(headBow, character.right) * head.rotation;
+        if (reflectionHead && reflection)
+            reflectionHead.rotation = Quaternion.AngleAxis(headBow, reflection.transform.right) * reflectionHead.rotation;
     }
 
     static bool SkipPressed()

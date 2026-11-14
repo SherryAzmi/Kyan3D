@@ -112,6 +112,12 @@ public class DryBedPuzzle : MonoBehaviour
         {
             fill = Mathf.Clamp01(fill + Time.deltaTime / fillTime);
             SetFill(fill);
+            var a = GameAudio.I;
+            if (a)
+            {
+                GameAudio.Hold("riverD", a.waterFlow, 0, 0.9f + 0.2f * fill);
+                GameAudio.Hold("riverF", a.waterFlow, 1, 0.9f + 0.2f * fill);
+            }
             if (fill >= 1f) { filling = false; OnRiverFilled(); }
         }
 
@@ -201,6 +207,7 @@ public class DryBedPuzzle : MonoBehaviour
         if (gateOpened) return;
         gateOpened = true;
         filling = true;
+        if (GameAudio.I) { GameAudio.Play(GameAudio.I.splash, 1); GameAudio.Play(GameAudio.I.splash, 0, 0.6f); }
         if (springGate) StartCoroutine(Sink(springGate, gateDropDepth, 1.5f));
         if (springGlow) StartCoroutine(PulseLight(springGlow, springGlow.intensity, springGlowBase, 2f));
         hud?.ShowMessage(1, "The gate opens. Water pours down the river!", 5f);
@@ -210,6 +217,7 @@ public class DryBedPuzzle : MonoBehaviour
     void OnRiverFilled()
     {
         riverFilled = true;
+        if (GameAudio.I) GameAudio.Play(GameAudio.I.arrive, 0);
         foreach (var m in mounds)
         {
             if (!m) continue;
@@ -260,6 +268,7 @@ public class DryBedPuzzle : MonoBehaviour
 
     IEnumerator OpenCage()
     {
+        if (GameAudio.I) GameAudio.Play(GameAudio.I.bridgeDone, 1);
         var start = new Vector3[cageRoots.Length];
         for (int i = 0; i < cageRoots.Length; i++) start[i] = cageRoots[i].position;
         const float time = 3f;
@@ -285,6 +294,7 @@ public class DryBedPuzzle : MonoBehaviour
     void OnFragmentCollected(MirrorFragment f)
     {
         fragmentTaken = true;
+        if (GameAudio.I) GameAudio.Play(GameAudio.I.fragment);
         if (fragmentLight) StartCoroutine(PulseLight(fragmentLight, fragmentLight.intensity, 0f, 1.5f));
         if (desertWaterRenderer) StartCoroutine(BrightenRiver());
         if (springGlow) StartCoroutine(PulseLight(springGlow, springGlow.intensity, springGlowBase * 1.8f, 2f));

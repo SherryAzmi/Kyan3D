@@ -9,7 +9,7 @@ using UnityEngine;
 /// </summary>
 public static class AudioSetup
 {
-    static readonly string[] GameplayScenes = { "Assets/Scenes/Sh/SplitCamera.unity", "Assets/Scenes/Sh/Puzzle3.unity" };
+    static readonly string[] GameplayScenes = { "Assets/Scenes/Sh/SplitCamera.unity", "Assets/Scenes/Sh/Puzzle2.unity", "Assets/Scenes/Sh/Puzzle3.unity" };
     const string CutscenePath = "Assets/Scenes/Sh/Cutscene.unity";
 
     [MenuItem("Tools/Kyan/Setup Audio (all scenes)")]
@@ -72,6 +72,7 @@ public static class AudioSetup
         a.joinHum = SoundSynth.Load("sfx_join_loop");
         a.mirrorWhole = SoundSynth.Load("sfx_mirror_whole");
         a.click = SoundSynth.Load("sfx_click");
+        a.waterFlow = SoundSynth.Load("sfx_water_flow");
         a.endingMusic = SoundSynth.Load("music_ending");
         return a;
     }

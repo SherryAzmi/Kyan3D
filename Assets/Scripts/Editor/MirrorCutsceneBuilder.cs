@@ -162,6 +162,7 @@ public static class MirrorCutsceneBuilder
         d.sfx = sfx;
         d.nextScene = "SplitCamera";
         AudioSetup.WireCutscene(d);
+        CharacterSetup.PlaceCharacters();
 
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);

@@ -39,9 +39,12 @@ public class RootWheel : Interactable
         if (!IsAwake || done) return;
         progress = Mathf.Clamp01(progress + dt / turnTime);
         if (wheel) wheel.Rotate(0f, 0f, -140f * dt, Space.Self);
+        var a = GameAudio.I;
+        if (a) GameAudio.Hold("wheel", a.grow, GameAudio.SideOf(transform.position), 0.7f + 0.4f * progress);
         if (progress >= 1f)
         {
             done = true;
+            if (a) GameAudio.Play(a.digDone, transform.position);
             if (DryBedPuzzle.Instance) DryBedPuzzle.Instance.OnGateOpened();
         }
     }

@@ -133,6 +133,8 @@ public static partial class BridgePuzzleBuilder
         // ---------- ending ----------
         mp.ending = BuildEnding(hud);
         AudioSetup.AddGameAudio();
+        ModelDresser.DressOpenScene();
+        CharacterSetup.PlaceCharacters();
 
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);

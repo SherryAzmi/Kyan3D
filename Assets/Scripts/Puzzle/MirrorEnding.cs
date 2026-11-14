@@ -23,6 +23,9 @@ public class MirrorEnding : MonoBehaviour
     public Transform futureFig;
     public Transform presentStand, futureStand, meetPoint;
     public Renderer reflectionFig;
+    [Tooltip("Character models in the reflection. If set, the reflection turns from the Present into the Future instead of changing colour.")]
+    public GameObject reflectionPresent;
+    public GameObject reflectionFuture;
     public GameObject wholeFig;
     public Color presentColor = new Color(0.62f, 0.59f, 0.54f);
     public Color futureColor = new Color(1f, 0.72f, 0.35f);
@@ -58,13 +61,18 @@ public class MirrorEnding : MonoBehaviour
     bool playing;
     float camT, camDuration = 30f;
     Material reflMat, wholeMat;
+    GameObject reflectionRoot;
+
+    bool ModelReflection => reflectionPresent && reflectionFuture;
 
     void Awake()
     {
         if (endingCam) endingCam.enabled = false;
         if (wholeFig) wholeFig.SetActive(false);
-        if (reflectionFig) { reflMat = reflectionFig.material; reflectionFig.gameObject.SetActive(false); }
-        if (wholeFig) wholeMat = wholeFig.GetComponentInChildren<Renderer>().material;
+        if (ModelReflection) reflectionRoot = reflectionPresent.transform.parent.gameObject;
+        else if (reflectionFig) { reflMat = reflectionFig.material; reflectionRoot = reflectionFig.gameObject; }
+        if (reflectionRoot) reflectionRoot.SetActive(false);
+        if (wholeFig && !wholeFig.GetComponentInChildren<Animator>()) wholeMat = wholeFig.GetComponentInChildren<Renderer>().material;
         SetAlpha(whiteImage, 0f);
         SetAlpha(noteBackdrop, 0f);
         SetAlpha(headerText, 0f);
@@ -122,7 +130,7 @@ public class MirrorEnding : MonoBehaviour
         }
 
         // 4. One reflection, blending from the Present to the Future. The note.
-        if (reflectionFig) reflectionFig.gameObject.SetActive(true);
+        if (reflectionRoot) reflectionRoot.SetActive(true);
         StartCoroutine(BlendReflection(noteHoldTime + 3f));
         yield return new WaitForSeconds(1f);
         StartCoroutine(Fade(noteBackdrop, 0f, 0.5f, 1f));
@@ -169,6 +177,22 @@ public class MirrorEnding : MonoBehaviour
 
     IEnumerator BlendReflection(float duration)
     {
+        if (ModelReflection)
+        {
+            // The tired reflection slowly becomes the hopeful one: same person, same place.
+            reflectionPresent.SetActive(true);
+            reflectionFuture.SetActive(false);
+            yield return new WaitForSeconds(duration * 0.55f);
+            Transform t = reflectionRoot.transform;
+            Vector3 s0 = t.localScale;
+            for (float k = 0f; k < 0.25f; k += Time.deltaTime) { t.localScale = s0 * (1f - 0.08f * k / 0.25f); yield return null; }
+            reflectionPresent.SetActive(false);
+            reflectionFuture.SetActive(true);
+            if (mirrorLight) mirrorLight.intensity *= 1.3f;
+            for (float k = 0f; k < 0.25f; k += Time.deltaTime) { t.localScale = s0 * (0.92f + 0.08f * k / 0.25f); yield return null; }
+            t.localScale = s0;
+            yield break;
+        }
         if (!reflMat) yield break;
         for (float t = 0f; t < duration; t += Time.deltaTime)
         {
