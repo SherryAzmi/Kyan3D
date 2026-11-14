@@ -31,6 +31,8 @@ public class SandMound : Interactable
         if (Dug) return;
         progress = Mathf.Clamp01(progress + dt / digTime);
         lastDigTime = Time.time;
+        var a = GameAudio.I;
+        if (a) GameAudio.Hold("dig" + GetInstanceID(), a.dig, GameAudio.SideOf(transform.position));
         if (progress >= 1f) Finish();
     }
 
@@ -47,6 +49,7 @@ public class SandMound : Interactable
     void Finish()
     {
         Dug = true;
+        if (GameAudio.I) GameAudio.Play(GameAudio.I.digDone, transform.position);
         gameObject.SetActive(false); // also removes it from Interactable.All
         if (revealedStone && revealedMaterial) revealedStone.sharedMaterial = revealedMaterial;
         if (BridgePuzzle.Instance) BridgePuzzle.Instance.OnMoundDug(this);

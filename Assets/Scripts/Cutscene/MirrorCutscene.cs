@@ -74,6 +74,12 @@ public class MirrorCutscene : MonoBehaviour
     public AudioClip whisperClip;
     public AudioClip crackClip;
     public AudioClip shatterClip;
+    public AudioClip roomToneClip;
+    public AudioClip musicClip;
+    public AudioClip heartbeatClip;
+    [Range(0f, 1f)] public float roomToneVolume = 0.45f;
+    [Range(0f, 1f)] public float musicVolume = 0.35f;
+    [Range(0f, 1f)] public float whisperMaxVolume = 0.85f;
 
     [Header("Next scene (must be in Build Profiles scene list)")]
     public string nextScene = "SplitCamera";
@@ -101,6 +107,33 @@ public class MirrorCutscene : MonoBehaviour
     Coroutine main;
     bool ending;
     float fixedDtBase;
+    AudioSource roomSrc, musicSrc, whisperSrc;
+
+    AudioSource LoopSource(AudioClip clip, float volume)
+    {
+        if (!clip) return null;
+        var s = gameObject.AddComponent<AudioSource>();
+        s.clip = clip;
+        s.loop = true;
+        s.playOnAwake = false;
+        s.spatialBlend = 0f;
+        s.volume = volume;
+        s.Play();
+        return s;
+    }
+
+    IEnumerator FadeSource(AudioSource s, float to, float duration)
+    {
+        if (!s) yield break;
+        float from = s.volume;
+        for (float t = 0f; t < duration; t += Time.unscaledDeltaTime)
+        {
+            if (!s) yield break;
+            s.volume = Mathf.Lerp(from, to, t / duration);
+            yield return null;
+        }
+        if (s) s.volume = to;
+    }
 
     void Start()
     {
@@ -121,6 +154,12 @@ public class MirrorCutscene : MonoBehaviour
         SetSmoke(0f);
         BuildCracks();
 
+        roomSrc = LoopSource(roomToneClip, 0f);
+        musicSrc = LoopSource(musicClip, 0f);
+        whisperSrc = LoopSource(whisperClip, 0f);
+        StartCoroutine(FadeSource(roomSrc, roomToneVolume, 3f));
+        StartCoroutine(FadeSource(musicSrc, musicVolume, 4f));
+
         main = StartCoroutine(Run());
     }
 
@@ -140,13 +179,24 @@ public class MirrorCutscene : MonoBehaviour
         yield return new WaitForSeconds(shoulderShotTime);
 
         // 3. The thoughts.
-        Play(whisperClip);
         int crackShown = 0;
-        float elapsed = 0f, nextSpawn = 0f;
+        float elapsed = 0f, nextSpawn = 0f, nextBeat = 0f;
         while (elapsed < thoughtsTime)
         {
             float k = elapsed / thoughtsTime;
             distress = k;
+
+            if (whisperSrc)
+            {
+                whisperSrc.volume = whisperMaxVolume * Mathf.Clamp01(k * 1.4f);
+                whisperSrc.pitch = 0.9f + 0.25f * k;
+            }
+            if (musicSrc) musicSrc.volume = musicVolume * (1f - 0.6f * k);
+            if (elapsed >= nextBeat)
+            {
+                if (sfx && heartbeatClip) sfx.PlayOneShot(heartbeatClip, 0.5f + 0.5f * k);
+                nextBeat = elapsed + Mathf.Lerp(1.1f, 0.42f, k);
+            }
 
             if (elapsed >= nextSpawn)
             {
@@ -175,8 +225,11 @@ public class MirrorCutscene : MonoBehaviour
         }
         foreach (var c in crackSegments) c.SetActive(true);
 
-        // 4. Shatter.
+        // 4. Shatter. Everything else cuts out: the impact lands in silence.
         Play(shatterClip);
+        if (whisperSrc) whisperSrc.Stop();
+        if (musicSrc) musicSrc.Stop();
+        if (roomSrc) roomSrc.volume = roomToneVolume * 0.3f;
         Shatter();
         StartCoroutine(Fade(flashImage, 0.9f, 0f, 0.7f));
         shake = 0.14f;
@@ -196,7 +249,11 @@ public class MirrorCutscene : MonoBehaviour
     {
         ending = true;
         if (skipHint) skipHint.enabled = false;
-        yield return Fade(fadeImage, fadeImage ? fadeImage.color.a : 0f, 1f, skipped ? 0.5f : 1.8f);
+        float fadeTime = skipped ? 0.5f : 1.8f;
+        StartCoroutine(FadeSource(roomSrc, 0f, fadeTime));
+        StartCoroutine(FadeSource(musicSrc, 0f, fadeTime));
+        StartCoroutine(FadeSource(whisperSrc, 0f, fadeTime));
+        yield return Fade(fadeImage, fadeImage ? fadeImage.color.a : 0f, 1f, fadeTime);
 
         Time.timeScale = 1f;
         Time.fixedDeltaTime = fixedDtBase;

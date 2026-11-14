@@ -85,6 +85,7 @@ public class MirrorEnding : MonoBehaviour
     IEnumerator Run()
     {
         foreach (var b in disableOnPlay) if (b) b.enabled = false;
+        if (GameAudio.I) GameAudio.ChangeMusic(GameAudio.I.endingMusic, 4f, 0.25f);
         if (headerText) headerText.text = header;
         if (noteText) noteText.text = note;
         if (closingText) closingText.text = closing;
@@ -197,6 +198,7 @@ public class MirrorEnding : MonoBehaviour
 
     void PlayAgain()
     {
+        if (GameAudio.I) GameAudio.Play(GameAudio.I.click);
         if (!Application.CanStreamedLevelBeLoaded(firstScene))
         {
             Debug.LogError($"[MirrorEnding] Scene '{firstScene}' is not in the build scene list.");
@@ -208,6 +210,7 @@ public class MirrorEnding : MonoBehaviour
 
     void Quit()
     {
+        if (GameAudio.I) GameAudio.Play(GameAudio.I.click);
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #else

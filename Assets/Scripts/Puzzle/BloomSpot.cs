@@ -32,11 +32,14 @@ public class BloomSpot : Interactable
     {
         if (Bloomed) return;
         progress = Mathf.Clamp01(progress + dt / growTime);
+        var a = GameAudio.I;
+        if (a) GameAudio.Hold("bloom" + GetInstanceID(), a.grow, GameAudio.SideOf(transform.position), 0.9f + 0.4f * progress);
         if (stalk) stalk.localScale = new Vector3(stalkScale.x, Mathf.Max(0.001f, stalkScale.y * progress), stalkScale.z);
         if (bud) bud.localScale = budScale * Mathf.Clamp01((progress - 0.6f) / 0.4f);
         if (progress >= 1f)
         {
             Bloomed = true;
+            if (a) GameAudio.Play(a.bloom, transform.position);
             if (MirrorPuzzle.Instance) MirrorPuzzle.Instance.OnBloomed(this);
         }
     }

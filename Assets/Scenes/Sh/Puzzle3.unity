@@ -17015,6 +17015,73 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1213754580}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1219224458
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1219224460}
+  - component: {fileID: 1219224459}
+  m_Layer: 0
+  m_Name: GameAudio
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1219224459
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1219224458}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de5fbf571327c95448c886f873591cc6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameAudio
+  music: {fileID: 8300000, guid: 39c8f4b65acb16a448b9d501ba072bb2, type: 3}
+  ambienceLeft: {fileID: 8300000, guid: f063ebe4708fc2748aabd77210209805, type: 3}
+  ambienceRight: {fileID: 8300000, guid: 2b6fc16a186d27745882f3dee016650d, type: 3}
+  musicVolume: 0.32
+  ambienceVolume: 0.5
+  sfxVolume: 0.85
+  dig: {fileID: 8300000, guid: 1995dca3b74de664180b931d505850f1, type: 3}
+  digDone: {fileID: 8300000, guid: 3de979663f74b5949a51322658c70735, type: 3}
+  pickup: {fileID: 8300000, guid: 0148ab80041bef443b0cf99119d98a59, type: 3}
+  drop: {fileID: 8300000, guid: 6b9f523d32a0ee14fb8b355edbf9e3a6, type: 3}
+  splash: {fileID: 8300000, guid: c89dee9e14a72514e92e2aac2292e6e5, type: 3}
+  arrive: {fileID: 8300000, guid: 80cb2ca027ee9ed4d89d9b12f6a034a1, type: 3}
+  place: {fileID: 8300000, guid: 346755898b41de24d930560cc02bb9a6, type: 3}
+  grow: {fileID: 8300000, guid: 7139650c37b891747b7e45df1351b4f8, type: 3}
+  bridgeDone: {fileID: 8300000, guid: 6677089fe1d8f2b43bcdea86a37c40de, type: 3}
+  fragment: {fileID: 8300000, guid: 3c6fbfa23cb79584393eb4fbaf330bdd, type: 3}
+  bloom: {fileID: 8300000, guid: 518cabe2671aca042b9af433c3edb1e0, type: 3}
+  joinHum: {fileID: 8300000, guid: 8740a34bb1025aa47bc35e979e7841a9, type: 3}
+  mirrorWhole: {fileID: 8300000, guid: 286767e0459a3484e84321ad9d6b4bed, type: 3}
+  click: {fileID: 8300000, guid: abba585a89b70e44b9b8d62b7fc5ac82, type: 3}
+  endingMusic: {fileID: 8300000, guid: b2f703d4c830065438489dcd876f0800, type: 3}
+  forestMinX: 150
+  endingMinX: 450
+--- !u!4 &1219224460
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1219224458}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1221320893
 GameObject:
   m_ObjectHideFlags: 0
@@ -32232,7 +32299,7 @@ MonoBehaviour:
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 10
-    m_MaxSize: 40
+    m_MaxSize: 52
     m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
@@ -32630,3 +32697,4 @@ SceneRoots:
   - {fileID: 328803527}
   - {fileID: 195077727}
   - {fileID: 713151397}
+  - {fileID: 1219224460}

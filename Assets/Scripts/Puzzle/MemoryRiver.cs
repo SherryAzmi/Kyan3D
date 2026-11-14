@@ -36,9 +36,16 @@ public class MemoryRiver : Interactable
         float z = Mathf.Clamp(transform.InverseTransformPoint(p.transform.position).z, zMin + 1f, zMax - 1f);
         Ripple(z);
         if (other) other.Ripple(z);
+        var a = GameAudio.I;
+        if (a)
+        {
+            GameAudio.Play(a.splash, transform.position);
+            if (other) GameAudio.Play(a.splash, other.transform.position, 0.5f); // the echo in the other world
+        }
 
         if (p.Carried && other)
         {
+            if (a) GameAudio.Play(a.arrive, other.transform.position);
             var c = p.TakeCarried();
             c.PlaceAt(other.transform.TransformPoint(new Vector3(other.bankX, 0.35f, z)));
             if (BridgePuzzle.Instance) BridgePuzzle.Instance.OnObjectCrossedRiver(c, this, other);

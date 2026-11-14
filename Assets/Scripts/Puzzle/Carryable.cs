@@ -24,6 +24,7 @@ public class Carryable : Interactable
     public void OnPickedUp(PlayerInteractor p)
     {
         Holder = p;
+        if (GameAudio.I) GameAudio.Play(GameAudio.I.pickup, p.transform.position);
         transform.SetParent(p.holdPoint, false);
         transform.localPosition = Vector3.zero;
     }
@@ -31,6 +32,7 @@ public class Carryable : Interactable
     public void OnDropped(Vector3 worldPos)
     {
         Holder = null;
+        if (GameAudio.I) GameAudio.Play(GameAudio.I.drop, worldPos);
         transform.SetParent(null, true);
         PlaceAt(worldPos);
     }

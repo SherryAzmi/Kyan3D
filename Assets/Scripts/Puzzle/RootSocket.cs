@@ -40,6 +40,7 @@ public class RootSocket : Interactable
         seed.enabled = false; // no longer pick-up-able
         seed.transform.SetParent(seedSlot, false);
         seed.transform.localPosition = Vector3.zero;
+        if (GameAudio.I) GameAudio.Play(GameAudio.I.place, transform.position);
         Wake();
         if (BridgePuzzle.Instance) BridgePuzzle.Instance.OnSeedPlaced();
     }
@@ -52,9 +53,16 @@ public class RootSocket : Interactable
         if (!seed || done) return;
         progress = Mathf.Clamp01(progress + dt / growTime);
         if (BridgePuzzle.Instance) BridgePuzzle.Instance.SetBridgeGrowth(progress);
+        var a = GameAudio.I;
+        if (a)
+        {
+            GameAudio.Hold("roots", a.grow, 1, 0.85f + 0.35f * progress);        // roots creak in the forest
+            GameAudio.Hold("stones", a.grow, 0, 0.6f + 0.2f * progress, 0.8f);   // stones rumble in the desert
+        }
         if (progress >= 1f)
         {
             done = true;
+            if (a) GameAudio.Play(a.bridgeDone);
             if (BridgePuzzle.Instance) BridgePuzzle.Instance.OnBridgeComplete();
         }
     }

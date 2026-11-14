@@ -6404,7 +6404,7 @@ MonoBehaviour:
     m_FontStyle: 2
     m_BestFit: 0
     m_MinSize: 10
-    m_MaxSize: 40
+    m_MaxSize: 44
     m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
@@ -7227,9 +7227,15 @@ MonoBehaviour:
   captionHoldTime: 2.5
   caption: ...and the pieces fell into two worlds.
   sfx: {fileID: 1018200913}
-  whisperClip: {fileID: 0}
-  crackClip: {fileID: 0}
-  shatterClip: {fileID: 0}
+  whisperClip: {fileID: 8300000, guid: e8ae7c73e313e4742af4f9314a205cc0, type: 3}
+  crackClip: {fileID: 8300000, guid: 6f02134d38bc82a49b27c8636fbf8392, type: 3}
+  shatterClip: {fileID: 8300000, guid: b17a95f3a89feac4396c52911a95d391, type: 3}
+  roomToneClip: {fileID: 8300000, guid: 150603ed8e5f55243b6d437134117649, type: 3}
+  musicClip: {fileID: 8300000, guid: 01f324b7df28ea844b71dbf591aec0b7, type: 3}
+  heartbeatClip: {fileID: 8300000, guid: cb88b2a512c34654a819aef367d59ce6, type: 3}
+  roomToneVolume: 0.45
+  musicVolume: 0.35
+  whisperMaxVolume: 0.85
   nextScene: SplitCamera
 --- !u!82 &1018200913
 AudioSource:

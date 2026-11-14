@@ -226,6 +226,7 @@ public class BridgePuzzle : MonoBehaviour
     public void OnFragmentCollected(MirrorFragment f)
     {
         fragmentTaken = true;
+        if (GameAudio.I) GameAudio.Play(GameAudio.I.fragment);
         if (fragmentLight) StartCoroutine(Pulse(fragmentLight, fragmentLight.intensity, 0f));
         Debug.Log("[BridgePuzzle] Puzzle complete: Mirror Fragment collected.");
         if (fragmentCutscene) fragmentCutscene.Play();

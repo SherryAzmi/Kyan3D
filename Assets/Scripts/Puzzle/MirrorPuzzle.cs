@@ -92,7 +92,14 @@ public class MirrorPuzzle : MonoBehaviour
             StartCoroutine(FlyIn(mirrors[i].piece1, piece1Home[i], 0f));
             StartCoroutine(FlyIn(mirrors[i].piece2, piece2Home[i], 0.8f));
         }
-        yield return new WaitForSeconds(2.6f);
+        if (GameAudio.I)
+        {
+            GameAudio.Play(GameAudio.I.arrive, -1, 0.7f);
+            yield return new WaitForSeconds(0.8f);
+            GameAudio.Play(GameAudio.I.arrive, -1, 0.7f, 1.12f);
+            yield return new WaitForSeconds(1.8f);
+        }
+        else yield return new WaitForSeconds(2.6f);
         hud?.ShowMessage(0, "The same mirror... two pieces found, one still missing.\nSomething is buried in the sand.", 6f);
         hud?.ShowMessage(1, "The same mirror... two pieces found, one still missing.\nSomething waits beneath the moss.", 6f);
     }
@@ -138,6 +145,11 @@ public class MirrorPuzzle : MonoBehaviour
     {
         placed[world] = true;
         if (c) c.gameObject.SetActive(false);
+        if (GameAudio.I)
+        {
+            GameAudio.Play(GameAudio.I.place, world);
+            GameAudio.Play(GameAudio.I.arrive, 1 - world, 0.6f); // it shows up in the other mirror too
+        }
         foreach (var m in mirrors)
         {
             var half = world == 0 ? m.halfDesert : m.halfForest;
@@ -165,6 +177,7 @@ public class MirrorPuzzle : MonoBehaviour
             if (a && b)
             {
                 JoinProgress = Mathf.Clamp01(JoinProgress + Time.deltaTime / joinTime);
+                if (GameAudio.I) GameAudio.Hold("join", GameAudio.I.joinHum, -1, 0.8f + 0.7f * JoinProgress, 0.6f + 0.4f * JoinProgress);
                 foreach (var m in mirrors) if (m.glow) m.glow.intensity = 1f + 5f * JoinProgress;
                 if (JoinProgress >= 1f) Join();
             }
@@ -180,6 +193,7 @@ public class MirrorPuzzle : MonoBehaviour
     void Join()
     {
         Joined = true;
+        if (GameAudio.I) GameAudio.Play(GameAudio.I.mirrorWhole);
         foreach (var m in mirrors) if (m.seam) m.seam.SetActive(false);
         if (desertBeacon) desertBeacon.SetTarget(null);
         if (forestBeacon) forestBeacon.SetTarget(null);

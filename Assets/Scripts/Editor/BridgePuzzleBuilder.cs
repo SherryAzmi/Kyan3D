@@ -186,6 +186,7 @@ public static partial class BridgePuzzleBuilder
         // ---------- fragment cutscene (flower + note) ----------
         puzzle.fragmentCutscene = BuildFragmentCutscene(flower, petals, flowerLight, presentGo,
                                                         sun ? sun.GetComponent<Light>() : null, hud);
+        AudioSetup.AddGameAudio();
 
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);

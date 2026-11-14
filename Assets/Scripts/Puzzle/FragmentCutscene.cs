@@ -100,6 +100,11 @@ public class FragmentCutscene : MonoBehaviour
         StartCoroutine(Fade(fadeImage, 1f, 0f, 1.2f));
         yield return new WaitForSeconds(0.6f);
         if (focus) RippleFX.Spawn(focus.position + Vector3.up * 0.05f, rippleMaterial, 0f);
+        if (GameAudio.I)
+        {
+            GameAudio.Play(GameAudio.I.bloom);
+            GameAudio.ChangeMusic(GameAudio.I.endingMusic, 3f, 0.5f);
+        }
         Color sunFrom = sun ? sun.color : Color.white;
         float sunIntFrom = sun ? sun.intensity : 1f;
         for (float t = 0f; t < growTime; t += Time.deltaTime)
