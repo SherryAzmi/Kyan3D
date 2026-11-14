@@ -18,11 +18,11 @@ using UnityEngine.UI;
 /// </summary>
 public static partial class BridgePuzzleBuilder
 {
-    const string Puzzle3Path = "Assets/Scenes/Sh/Puzzle3.unity";
+    const string Puzzle3ScenePath = "Assets/Scenes/Sh/Puzzle3.unity";
     static readonly Vector3 MirrorPos = new Vector3(0f, 0f, 7f);
     static readonly Vector3 EndingOrigin = new Vector3(600f, 0f, 0f);
 
-    static Material mMirrorBack, mSlotOutline, mMirrorPiece, mSeam, mEndGlass, mMoss, mFrameWood;
+    static Material mMirrorBack, mSlotOutline, mMirrorPiece, mSeam, mEndGlass, mMoss, mMirrorFrame;
 
     [MenuItem("Tools/Kyan/Build Mirror Puzzle (Puzzle 3)")]
     static void BuildPuzzle3FromMenu()
@@ -38,12 +38,12 @@ public static partial class BridgePuzzleBuilder
     {
         // ---------- scene + split-screen rig ----------
         UnityEngine.SceneManagement.Scene scene;
-        if (AssetDatabase.LoadAssetAtPath<SceneAsset>(Puzzle3Path))
-            scene = EditorSceneManager.OpenScene(Puzzle3Path, OpenSceneMode.Single);
+        if (AssetDatabase.LoadAssetAtPath<SceneAsset>(Puzzle3ScenePath))
+            scene = EditorSceneManager.OpenScene(Puzzle3ScenePath, OpenSceneMode.Single);
         else
         {
             scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
-            EditorSceneManager.SaveScene(scene, Puzzle3Path);
+            EditorSceneManager.SaveScene(scene, Puzzle3ScenePath);
         }
         if (!GameObject.Find("--- PLAYERS ---")) SplitCameraSceneBuilder.Build();
 
@@ -139,10 +139,10 @@ public static partial class BridgePuzzleBuilder
         AssetDatabase.SaveAssets();
 
         var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
-        if (!scenes.Exists(x => x.path == Puzzle3Path))
+        if (!scenes.Exists(x => x.path == Puzzle3ScenePath))
         {
             int at = scenes.FindIndex(x => x.path == Puzzle2Path);
-            scenes.Insert(at >= 0 ? at + 1 : scenes.Count, new EditorBuildSettingsScene(Puzzle3Path, true));
+            scenes.Insert(at >= 0 ? at + 1 : scenes.Count, new EditorBuildSettingsScene(Puzzle3ScenePath, true));
             EditorBuildSettings.scenes = scenes.ToArray();
         }
         Debug.Log("[MirrorPuzzleBuilder] Puzzle3 built: broken mirror, split shard, join, ending.");
@@ -162,12 +162,12 @@ public static partial class BridgePuzzleBuilder
 
     static void MirrorFrame(Transform root)
     {
-        Box("Frame Top", root, new Vector3(0f, 2.29f, 0f), new Vector3(1.26f, 0.08f, 0.08f), mFrameWood, false);
-        Box("Frame Bottom", root, new Vector3(0f, 0.21f, 0f), new Vector3(1.26f, 0.08f, 0.08f), mFrameWood, false);
-        Box("Frame Left", root, new Vector3(-0.59f, 1.25f, 0f), new Vector3(0.08f, 2.16f, 0.08f), mFrameWood, false);
-        Box("Frame Right", root, new Vector3(0.59f, 1.25f, 0f), new Vector3(0.08f, 2.16f, 0.08f), mFrameWood, false);
-        Box("Foot Left", root, new Vector3(-0.55f, 0.1f, 0f), new Vector3(0.12f, 0.2f, 0.5f), mFrameWood, false);
-        Box("Foot Right", root, new Vector3(0.55f, 0.1f, 0f), new Vector3(0.12f, 0.2f, 0.5f), mFrameWood, false);
+        Box("Frame Top", root, new Vector3(0f, 2.29f, 0f), new Vector3(1.26f, 0.08f, 0.08f), mMirrorFrame, false);
+        Box("Frame Bottom", root, new Vector3(0f, 0.21f, 0f), new Vector3(1.26f, 0.08f, 0.08f), mMirrorFrame, false);
+        Box("Frame Left", root, new Vector3(-0.59f, 1.25f, 0f), new Vector3(0.08f, 2.16f, 0.08f), mMirrorFrame, false);
+        Box("Frame Right", root, new Vector3(0.59f, 1.25f, 0f), new Vector3(0.08f, 2.16f, 0.08f), mMirrorFrame, false);
+        Box("Foot Left", root, new Vector3(-0.55f, 0.1f, 0f), new Vector3(0.12f, 0.2f, 0.5f), mMirrorFrame, false);
+        Box("Foot Right", root, new Vector3(0.55f, 0.1f, 0f), new Vector3(0.12f, 0.2f, 0.5f), mMirrorFrame, false);
     }
 
     static MirrorPuzzle.MirrorVisual BuildBrokenMirror(Transform world)
@@ -400,6 +400,6 @@ public static partial class BridgePuzzleBuilder
         mSeam = Unlit("M_Mirror_Seam", new Color(1f, 0.85f, 0.5f));
         mEndGlass = Glassy("M_Mirror_EndingGlass", new Color(0.75f, 0.82f, 0.9f, 0.22f));
         mMoss = Lit("M_Forest_Moss", new Color(0.18f, 0.42f, 0.2f), 0.1f);
-        mFrameWood = Lit("M_Mirror_Frame", new Color(0.3f, 0.22f, 0.15f), 0.45f);
+        mMirrorFrame = Lit("M_Mirror_Frame", new Color(0.3f, 0.22f, 0.15f), 0.45f);
     }
 }

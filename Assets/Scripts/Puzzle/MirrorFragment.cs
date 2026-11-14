@@ -3,6 +3,9 @@ using UnityEngine;
 /// <summary>The Mirror Fragment on the altar. Floats and spins; Interact collects it.</summary>
 public class MirrorFragment : Interactable
 {
+    /// <summary>Raised when the fragment is collected (used by puzzles other than the Broken Bridge).</summary>
+    public System.Action<MirrorFragment> onCollected;
+
     bool taken;
     Vector3 basePos;
 
@@ -15,6 +18,7 @@ public class MirrorFragment : Interactable
     {
         taken = true;
         if (BridgePuzzle.Instance) BridgePuzzle.Instance.OnFragmentCollected(this);
+        onCollected?.Invoke(this);
         gameObject.SetActive(false);
     }
 
