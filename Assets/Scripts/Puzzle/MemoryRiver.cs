@@ -16,6 +16,10 @@ public class MemoryRiver : Interactable
     public float bankX = -3f;
     public Material rippleMaterial;
     public Renderer water;
+    [Tooltip("Off = a decorative river: you can touch it, but it won't carry objects to the other world.")]
+    public bool canCarry = true;
+
+    bool HasWater => water && water.enabled && water.gameObject.activeInHierarchy;
 
     /// <summary>Raised on every Interact at the water: (this river, local z, true if the player was carrying something).</summary>
     public System.Action<MemoryRiver, float, bool> onTouched;
@@ -31,10 +35,13 @@ public class MemoryRiver : Interactable
         return new Vector2(dx, dz).magnitude;
     }
 
-    public override string Prompt(PlayerInteractor p) =>
-        p.Carried ? $"{{I}} Let the river carry the {p.Carried.displayName}" : "{I} Touch the water";
+    public override string Prompt(PlayerInteractor p)
+    {
+        if (p.Carried) return canCarry ? $"{{I}} Let the river carry the {p.Carried.displayName}" : null;
+        return HasWater ? "{I} Touch the water" : "{I} Touch the dry riverbed";
+    }
 
-    public override bool HandlesInteract(PlayerInteractor p) => true;
+    public override bool HandlesInteract(PlayerInteractor p) => !p.Carried || canCarry;
 
     public override void Interact(PlayerInteractor p)
     {
@@ -43,7 +50,7 @@ public class MemoryRiver : Interactable
         Ripple(z);
         if (other) other.Ripple(z);
         var a = GameAudio.I;
-        if (a)
+        if (a && HasWater)
         {
             GameAudio.Play(a.splash, transform.position);
             if (other) GameAudio.Play(a.splash, other.transform.position, 0.5f); // the echo in the other world
@@ -51,7 +58,7 @@ public class MemoryRiver : Interactable
         onTouched?.Invoke(this, z, carrying);
         MirrorCrackDivider.Pulse(carrying ? 1.2f : 0.8f); // the crack flares: something reached the other world
 
-        if (p.Carried && other)
+        if (p.Carried && other && canCarry)
         {
             if (a) GameAudio.Play(a.arrive, other.transform.position);
             var c = p.TakeCarried();

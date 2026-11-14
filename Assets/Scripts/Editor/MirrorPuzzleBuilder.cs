@@ -133,8 +133,11 @@ public static partial class BridgePuzzleBuilder
         // ---------- ending ----------
         mp.ending = BuildEnding(hud);
         AudioSetup.AddGameAudio();
+        AddPuzzle3Rivers(); // level 3: the water is back
         ModelDresser.DressOpenScene();
         CharacterSetup.PlaceCharacters();
+        GroundArt.ApplyOpenScene();
+        WorldLife.ApplyOpenScene();
 
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
@@ -263,8 +266,8 @@ public static partial class BridgePuzzleBuilder
         var camGo = new GameObject("Ending Camera");
         var cam = camGo.AddComponent<Camera>();
         cam.depth = 10f;
-        cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = new Color(0.93f, 0.88f, 0.8f);
+        cam.clearFlags = CameraClearFlags.Skybox; // the same blue sky as the rest of the game
+        cam.backgroundColor = new Color(0.55f, 0.72f, 0.9f);
         cam.fieldOfView = 45f;
         cam.nearClipPlane = 0.1f;
         cam.farClipPlane = 60f;

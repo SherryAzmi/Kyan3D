@@ -189,6 +189,9 @@ public static partial class BridgePuzzleBuilder
         AudioSetup.AddGameAudio();
         ModelDresser.DressOpenScene();
         CharacterSetup.PlaceCharacters();
+        DryDesertRiver(); // level 1: the Present's river is still dry
+        GroundArt.ApplyOpenScene();
+        WorldLife.ApplyOpenScene();
 
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);

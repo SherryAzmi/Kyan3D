@@ -37,6 +37,10 @@ public class GameAudio : MonoBehaviour
     public AudioClip click;
     public AudioClip waterFlow;    // loop while the river fills (Puzzle 2) and near any river
     public AudioClip waterStep;    // footstep while wading through the river
+    public AudioClip[] sandSteps;  // footsteps in the desert (a random one each step)
+    public AudioClip[] grassSteps; // footsteps in the forest
+    public AudioClip fall;         // whoosh while falling into a hole
+    public AudioClip hurt;         // damage thud when put back after falling
 
     [Header("Ending")]
     public AudioClip endingMusic;
