@@ -35,6 +35,16 @@ public class MemoryRiver : Interactable
         return new Vector2(dx, dz).magnitude;
     }
 
+    /// <summary>The nearest stretch of water to the player, not the river's pivot.</summary>
+    public override Vector3 FocusPoint(Vector3 from)
+    {
+        Vector3 local = transform.InverseTransformPoint(from);
+        local.z = Mathf.Clamp(local.z, zMin, zMax);
+        local.x = Mathf.Clamp(local.x, -halfWidth * 0.5f, halfWidth * 0.5f);
+        local.y = 0f;
+        return transform.TransformPoint(local);
+    }
+
     public override string Prompt(PlayerInteractor p)
     {
         if (p.Carried) return canCarry ? $"{{I}} Let the river carry the {p.Carried.displayName}" : null;

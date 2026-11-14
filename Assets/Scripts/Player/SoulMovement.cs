@@ -24,11 +24,23 @@ public class SoulMovement : MonoBehaviour
     float verticalVelocity;
     float lastJumpPress = -99f, lastGrounded = -99f;
 
-    void Awake() => cc = GetComponent<CharacterController>();
+    PlayerInteractor interactor;
+
+    /// <summary>The Present (P1, Light soul) is tired: walks slower than the Future. 0 = use moveSpeed as set.</summary>
+    public static float PresentSpeed = 3f;
+
+    void Awake()
+    {
+        cc = GetComponent<CharacterController>();
+        interactor = GetComponent<PlayerInteractor>();
+        if (PresentSpeed > 0f && input && input.soul == SoulType.Light) moveSpeed = PresentSpeed;
+    }
 
     void Update()
     {
-        Vector2 m = input != null ? input.Move : Vector2.zero;
+        // While using something (digging, growing, placing...) the player stands still and faces it.
+        bool focused = interactor && interactor.isActiveAndEnabled && interactor.HasFocus;
+        Vector2 m = input != null && !focused ? input.Move : Vector2.zero;
 
         // Camera-relative direction on the ground plane
         Vector3 fwd = viewCamera ? viewCamera.forward : Vector3.forward;
@@ -42,10 +54,18 @@ public class SoulMovement : MonoBehaviour
             Quaternion target = Quaternion.LookRotation(move.normalized, Vector3.up);
             transform.rotation = Quaternion.RotateTowards(transform.rotation, target, turnSpeed * Time.deltaTime);
         }
+        else if (focused)
+        {
+            Vector3 to = interactor.FocusPoint - transform.position;
+            to.y = 0f;
+            if (to.sqrMagnitude > 0.04f)
+                transform.rotation = Quaternion.RotateTowards(transform.rotation,
+                    Quaternion.LookRotation(to.normalized, Vector3.up), turnSpeed * 0.6f * Time.deltaTime);
+        }
 
         // Forgiving jump: remember the press for a moment and allow it shortly after leaving the ground,
         // so a jump is never "eaten" by a frame where the controller briefly isn't grounded.
-        if (input != null && input.JumpPressed) lastJumpPress = Time.time;
+        if (input != null && input.JumpPressed && !focused) lastJumpPress = Time.time;
         if (cc.isGrounded)
         {
             lastGrounded = Time.time;

@@ -27,6 +27,7 @@ public class SandMound : Interactable
 
     public override string Prompt(PlayerInteractor p) => Dug || p.Carried ? null : "Hold {P} to dig";
     public override bool UsesPower(PlayerInteractor p) => !Dug;
+    public override bool IsSolid => !Dug; // the dug-out hole can be walked over
     public override float Progress => progress;
 
     public override void Power(PlayerInteractor p, float dt)

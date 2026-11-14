@@ -31,6 +31,7 @@ public class RootWheel : Interactable
         return IsAwake ? "Hold {P} to turn the root wheel" : "An old root wheel. It won't budge...";
     }
 
+    public override bool IsSolid => true;
     public override bool UsesPower(PlayerInteractor p) => IsAwake && !done;
     public override float Progress => IsAwake && !done ? progress : -1f;
 

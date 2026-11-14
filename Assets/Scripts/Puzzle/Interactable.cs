@@ -34,6 +34,15 @@ public abstract class Interactable : MonoBehaviour
     public virtual bool UsesPower(PlayerInteractor p) => false;
     public virtual void Power(PlayerInteractor p, float dt) { }
 
+    /// <summary>Where the player looks and the camera aims while using this (seen from a player at <paramref name="from"/>).</summary>
+    public virtual Vector3 FocusPoint(Vector3 from) => transform.position;
+
+    /// <summary>Whether a tap (Interact) briefly holds the player still and turns the camera onto this.</summary>
+    public virtual bool FocusOnTap => true;
+
+    /// <summary>Players can't walk into this while true (InteractableSolids gives it a blocker at scene load).</summary>
+    public virtual bool IsSolid => false;
+
     /// <summary>0..1 for the hold bar, or negative to hide it.</summary>
     public virtual float Progress => -1f;
 }

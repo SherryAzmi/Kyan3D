@@ -19,6 +19,8 @@ public class Carryable : Interactable
         Holder || p.Carried ? null : $"{{I}} Pick up the {displayName}";
 
     public override bool HandlesInteract(PlayerInteractor p) => !Holder && !p.Carried;
+    // Picking up is instant and the object jumps into your hands: no camera focus for it.
+    public override bool FocusOnTap => false;
     public override void Interact(PlayerInteractor p) => p.PickUp(this);
 
     public void OnPickedUp(PlayerInteractor p)

@@ -45,6 +45,7 @@ public class RootSocket : Interactable
         if (BridgePuzzle.Instance) BridgePuzzle.Instance.OnSeedPlaced();
     }
 
+    public override bool IsSolid => true;
     public override bool UsesPower(PlayerInteractor p) => seed && !done;
     public override float Progress => seed ? progress : -1f;
 

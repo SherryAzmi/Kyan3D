@@ -81,8 +81,12 @@ public static class CharacterSetup
             c.loopTime = r != "Jump";
             c.lockRootRotation = true;      // bake into pose: the game moves the character, not the clip
             c.keepOriginalOrientation = true;
+            // Jump is a fall-and-land clip that starts with the body ~1 m above its original root. Measuring
+            // its height from the feet keeps the body on the player (the CharacterController does the real
+            // jump), so the body and a carried object move together.
             c.lockRootHeightY = true;
-            c.keepOriginalPositionY = true;
+            c.keepOriginalPositionY = r != "Jump";
+            c.heightFromFeet = r == "Jump"; // Jump: body height measured from the feet, so it stays on the player
             c.lockRootPositionXZ = true;
             c.keepOriginalPositionXZ = true;
             imp.clipAnimations = new[] { c };
@@ -101,11 +105,13 @@ public static class CharacterSetup
 
     public static void BuildControllers()
     {
-        BuildController("Present", 1.2f);
-        BuildController("Future", 1.6f);
+        // The Present's own walk clip is a tiny in-place shuffle that slides at game speed, so the Present
+        // walks with the normal walk, played slower (and SoulMovement.PresentSpeed / CharacterAnimator slump make it tired).
+        BuildController("Present", 1.3f, "Future_Walk", SoulMovement.PresentSpeed, 0.75f); // slower, heavier steps
+        BuildController("Future", 1.6f, "Future_Walk", 5.5f, 0.6f);
     }
 
-    static void BuildController(string who, float walkRef)
+    static void BuildController(string who, float walkRef, string walkClip, float topSpeed, float topRate)
     {
         string path = $"{AnimDir}/AC_{who}.controller";
         AssetDatabase.DeleteAsset(path);
@@ -118,12 +124,12 @@ public static class CharacterSetup
         var sm = ac.layers[0].stateMachine;
         var tree = new BlendTree { name = "Locomotion", blendParameter = "Speed", blendType = BlendTreeType.Simple1D, useAutomaticThresholds = false };
         AssetDatabase.AddObjectToAsset(tree, ac);
-        var walk = Clip($"{who}_Walk");
+        var walk = Clip(walkClip);
         tree.children = new[]
         {
             new ChildMotion { motion = Clip($"{who}_Idle"), threshold = 0f, timeScale = 1f },
             new ChildMotion { motion = walk, threshold = walkRef, timeScale = 1f },
-            new ChildMotion { motion = walk, threshold = 5.5f, timeScale = 5.5f / walkRef * 0.6f }, // faster steps when running speed
+            new ChildMotion { motion = walk, threshold = topSpeed, timeScale = topSpeed / walkRef * topRate }, // faster steps at full speed
         };
         var loco = sm.AddState("Locomotion");
         loco.motion = tree;

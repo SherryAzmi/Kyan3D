@@ -14,6 +14,7 @@ public class FramePedestal : Interactable
 
     public bool Filled => item;
 
+    public override bool IsSolid => true;
     public override string Prompt(PlayerInteractor p)
     {
         if (item) return null;

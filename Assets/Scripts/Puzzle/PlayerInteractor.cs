@@ -15,8 +15,26 @@ public class PlayerInteractor : MonoBehaviour
     public string interactKey = "□ / E";
     public string powerKey = "R2 / F";
 
+    /// <summary>Speeds up every hold-Power action at once (dig, grow, turn the wheel, bloom, join the mirror).
+    /// 1 = the times set on each object (dig 3 s, grow 4-5 s...), 2 = twice as fast.</summary>
+    public static float HoldSpeed = 2f;
+
+    [Header("Focus while interacting")]
+    [Tooltip("After a tap (place, touch the river...), the player stays still facing the object this long (seconds). 0 = off.")]
+    public float tapFocusTime = 0.6f;
+
     public Carryable Carried { get; private set; }
     public Interactable Current { get; private set; }
+
+    /// <summary>True while the player is using something: holding Power on it, or just after a tap.
+    /// SoulMovement then holds the player still and OrbitCameraInput turns the camera onto FocusPoint.</summary>
+    public bool HasFocus { get; private set; }
+    public Vector3 FocusPoint { get; private set; }
+
+    float tapFocusUntil = -1f;
+    Vector3 tapFocusPoint;
+
+    void OnDisable() => HasFocus = false;
 
     void Update()
     {
@@ -28,16 +46,32 @@ public class PlayerInteractor : MonoBehaviour
 
         if (input.InteractPressed)
         {
-            if (Current && Current.HandlesInteract(this)) Current.Interact(this);
+            if (Current && Current.HandlesInteract(this))
+            {
+                if (Current.FocusOnTap && tapFocusTime > 0f)
+                {
+                    tapFocusPoint = Current.FocusPoint(transform.position);
+                    tapFocusUntil = Time.time + tapFocusTime;
+                }
+                Current.Interact(this);
+            }
             else if (Carried) Drop();
         }
 
         float progress = -1f;
+        bool holding = false;
         if (Current && Current.UsesPower(this))
         {
-            if (input.PowerHeld) Current.Power(this, Time.deltaTime);
+            if (input.PowerHeld)
+            {
+                holding = true;
+                FocusPoint = Current.FocusPoint(transform.position);
+                Current.Power(this, Time.deltaTime * HoldSpeed);
+            }
             progress = Current.Progress;
         }
+        if (!holding && Time.time < tapFocusUntil) FocusPoint = tapFocusPoint;
+        HasFocus = holding || Time.time < tapFocusUntil;
 
         if (hud) hud.SetPrompt(hudSide, Format(prompt), progress);
     }
