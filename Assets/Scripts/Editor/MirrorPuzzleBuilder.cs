@@ -179,6 +179,10 @@ public static partial class BridgePuzzleBuilder
         root.localScale = Vector3.one * 1.6f; // bigger than the opening mirror so it reads on the split screen
         MirrorFrame(root);
         Box("Backing", root, new Vector3(0f, 1.25f, 0.03f), new Vector3(1.1f, 2f, 0.02f), mMirrorBack, false);
+        // solid: players can't walk through the mirror (covers frame, glass and feet)
+        var solid = root.gameObject.AddComponent<BoxCollider>();
+        solid.center = new Vector3(0f, 1.2f, 0.02f);
+        solid.size = new Vector3(1.32f, 2.4f, 0.6f);
 
         Vector3 s = new Vector3(0.52f, 0.96f, 0.012f), o = new Vector3(0.53f, 0.97f, 0.006f);
         var p1 = new Vector3(-0.275f, 1.745f, 0f);
