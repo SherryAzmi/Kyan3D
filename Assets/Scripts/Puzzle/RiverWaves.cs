@@ -1,10 +1,11 @@
 using UnityEngine;
 
 /// <summary>
-/// Turns a flat water box into moving water: the mesh is replaced at runtime by a fine grid
+/// Turns a flat water box into a natural river: the mesh is replaced at runtime by a fine grid
 /// (same local -0.5..0.5 footprint, so any scaling script, e.g. the Dry Bed river filling, still works)
-/// whose top surface rolls with waves that flow down the river, plus a gentle colour shimmer.
-/// Wave sizes are in metres and stay the same however the object is scaled.
+/// that meanders gently, varies in width, and rolls with waves flowing down the river.
+/// uv.x runs across the river (0..1), uv.y along it in metres (the Kyan/Water shader uses both).
+/// The curve depends only on world Z, so the desert and forest rivers stay mirror images.
 /// </summary>
 [RequireComponent(typeof(MeshFilter))]
 public class RiverWaves : MonoBehaviour
@@ -17,45 +18,47 @@ public class RiverWaves : MonoBehaviour
     public float flowSpeed = 1.4f;
     [Tooltip("Small cross ripples so it doesn't look like a washboard.")]
     public float choppiness = 0.5f;
-    [Tooltip("Grid density: vertices per metre.")]
-    public float resolution = 2.5f;
+    [Tooltip("Grid density: vertices per metre along the river.")]
+    public float resolution = 3f;
+    [Tooltip("Sideways bends (metres). 0 = straight.")]
+    public float meander = 1f;
     [Tooltip("Brightness pulse on the water colour (0 = off).")]
-    public float shimmer = 0.08f;
+    public float shimmer = 0.05f;
+
+    /// <summary>Sideways offset of the river centre at a world Z (metres). Shared by bed, banks and falls.</summary>
+    public static float Meander(float worldZ) =>
+        0.85f * Mathf.Sin(worldZ * 0.21f + 0.6f) + 0.3f * Mathf.Sin(worldZ * 0.53f + 2.1f);
+
+    /// <summary>Width multiplier at a world Z, so the river widens and narrows naturally.</summary>
+    public static float WidthScale(float worldZ) =>
+        1f + 0.13f * Mathf.Sin(worldZ * 0.37f + 1.1f) + 0.05f * Mathf.Sin(worldZ * 1.13f);
 
     Mesh mesh;
     Vector3[] baseVerts, verts;
+    Vector2[] uvs;
     int cols, rows;
     Renderer rend;
     MaterialPropertyBlock block;
-    Color baseColor;
-    float builtForZ;
 
     void Start()
     {
         rend = GetComponent<Renderer>();
-        if (rend && rend.sharedMaterial && rend.sharedMaterial.HasProperty("_BaseColor"))
-            baseColor = rend.sharedMaterial.GetColor("_BaseColor");
         Build();
     }
 
     void Build()
     {
         Vector3 s = transform.lossyScale;
-        builtForZ = Mathf.Max(s.z, 0.001f);
-        // Size the grid for the river at full length so a growing river keeps enough detail.
-        float fullZ = Mathf.Max(builtForZ, 20f);
-        cols = Mathf.Clamp(Mathf.CeilToInt(Mathf.Abs(s.x) * resolution), 4, 40);
-        rows = Mathf.Clamp(Mathf.CeilToInt(fullZ * resolution), 8, 200);
+        float fullZ = Mathf.Max(Mathf.Abs(s.z), 20f); // detail for the full length, even while a river is still filling
+        cols = Mathf.Clamp(Mathf.CeilToInt(Mathf.Abs(s.x) * 3f), 8, 40);
+        rows = Mathf.Clamp(Mathf.CeilToInt(fullZ * resolution), 16, 220);
 
         baseVerts = new Vector3[(cols + 1) * (rows + 1)];
-        var uv = new Vector2[baseVerts.Length];
+        uvs = new Vector2[baseVerts.Length];
         for (int r = 0; r <= rows; r++)
             for (int c = 0; c <= cols; c++)
-            {
-                int i = r * (cols + 1) + c;
-                baseVerts[i] = new Vector3(c / (float)cols - 0.5f, 0.5f, r / (float)rows - 0.5f);
-                uv[i] = new Vector2(c / (float)cols, r / (float)rows);
-            }
+                baseVerts[r * (cols + 1) + c] = new Vector3(c / (float)cols - 0.5f, 0.5f, r / (float)rows - 0.5f);
+
         var tris = new int[cols * rows * 6];
         int t = 0;
         for (int r = 0; r < rows; r++)
@@ -70,7 +73,7 @@ public class RiverWaves : MonoBehaviour
         mesh = new Mesh { name = "River Waves" };
         mesh.MarkDynamic();
         mesh.vertices = verts;
-        mesh.uv = uv;
+        mesh.uv = uvs;
         mesh.triangles = tris;
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
@@ -81,36 +84,43 @@ public class RiverWaves : MonoBehaviour
     {
         if (mesh == null || (rend && !rend.enabled)) return;
         Vector3 s = transform.lossyScale;
-        float sx = Mathf.Abs(s.x), sy = Mathf.Max(Mathf.Abs(s.y), 0.0001f), sz = Mathf.Abs(s.z);
+        float sx = Mathf.Max(Mathf.Abs(s.x), 0.0001f), sy = Mathf.Max(Mathf.Abs(s.y), 0.0001f), sz = Mathf.Abs(s.z);
         float k = 2f * Mathf.PI / Mathf.Max(0.1f, wavelength);
         float time = Time.time;
+        float originZ = transform.position.z;
 
         for (int i = 0; i < verts.Length; i++)
         {
             Vector3 b = baseVerts[i];
-            float x = b.x * sx, z = b.z * sz;                  // metres along the strip
+            float z = b.z * sz;                         // metres along the strip
+            float worldZ = originZ + z;
+            float width = WidthScale(worldZ);
+            float x = b.x * sx * width;                 // metres across
             float h = Mathf.Sin(k * (z - flowSpeed * time))
                     + 0.45f * Mathf.Sin(k * 1.9f * (z - flowSpeed * 1.3f * time) + 1.3f)
                     + choppiness * 0.35f * Mathf.Sin(k * 2.7f * x + time * 2.3f + z * 0.7f);
-            // calmer at the banks
-            float edge = Mathf.Clamp01((0.5f - Mathf.Abs(b.x)) * 4f);
+            float edge = Mathf.Clamp01((0.5f - Mathf.Abs(b.x)) * 4f); // calmer at the banks
+
+            verts[i].x = (x + meander * Meander(worldZ)) / sx;
             // lifted so even the deepest trough stays above the river bed / ground
             verts[i].y = b.y + (amplitude * 1.8f + h * amplitude * edge) / sy;
+            verts[i].z = b.z;
+            uvs[i] = new Vector2(b.x + 0.5f, worldZ);
         }
         mesh.vertices = verts;
+        mesh.uv = uvs;
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
 
         // Read the live colour every frame: other scripts (e.g. the Dry Bed brightening) may change it.
         var mat = rend ? rend.sharedMaterial : null;
-        if (mat && mat.HasProperty("_BaseColor")) baseColor = mat.GetColor("_BaseColor");
-        if (rend && shimmer > 0f && baseColor.a > 0f)
+        if (rend && mat && shimmer > 0f && mat.HasProperty("_BaseColor"))
         {
+            Color baseColor = mat.GetColor("_BaseColor");
             block ??= new MaterialPropertyBlock();
             float p = 1f + shimmer * Mathf.Sin(time * 1.7f);
-            var c = new Color(baseColor.r * p, baseColor.g * p, baseColor.b * p, baseColor.a);
             rend.GetPropertyBlock(block);
-            block.SetColor("_BaseColor", c);
+            block.SetColor("_BaseColor", new Color(baseColor.r * p, baseColor.g * p, baseColor.b * p, baseColor.a));
             rend.SetPropertyBlock(block);
         }
     }

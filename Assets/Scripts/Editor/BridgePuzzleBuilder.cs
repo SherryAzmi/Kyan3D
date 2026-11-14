@@ -241,6 +241,7 @@ public static partial class BridgePuzzleBuilder
         mr.bankX = -3f;
         mr.rippleMaterial = mRipple;
         mr.water = strip.GetComponent<Renderer>();
+        RiverUpgrade.Upgrade(mr);
         return mr;
     }
 

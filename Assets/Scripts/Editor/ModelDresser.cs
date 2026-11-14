@@ -53,6 +53,8 @@ public static class ModelDresser
         new Rule { match = t => t.name == "Picture Frame", models = new[] { "PictureFrame_Broken" }, fit = Fit.FitCenter, scale = 1.1f },
         new Rule { match = t => t.name == "Fragment Altar" || t.name.StartsWith("Altar (") || t.name == "Fragment Altar (forest)", models = new[] { "FragmentShrine" }, fit = Fit.FitGround, scale = 1.7f },
         new Rule { match = t => t.name == "Spring Gate", models = new[] { "WaterGate" }, fit = Fit.FitGround },
+        new Rule { match = t => t.name.StartsWith("Bank Stone") && t.position.x < 150f, models = new[] { "Rock_Desert" }, fit = Fit.FitGround, scale = 1.4f, scaleJitter = 0.3f, randomYaw = true },
+        new Rule { match = t => t.name.StartsWith("Bank Stone") && t.position.x >= 150f, models = new[] { "Rock_Mossy" }, fit = Fit.FitGround, scale = 1.4f, scaleJitter = 0.3f, randomYaw = true },
     };
 
     [MenuItem("Tools/Kyan/Dress Scene With Models")]
