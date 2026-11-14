@@ -190,6 +190,7 @@ public static partial class BridgePuzzleBuilder
         ModelDresser.DressOpenScene();
         CharacterSetup.PlaceCharacters();
         DryDesertRiver(); // level 1: the Present's river is still dry
+        FillChasmWithThorns(); // the chasm is a ditch of thorns, not a bottomless hole
         GroundArt.ApplyOpenScene();
         WorldLife.ApplyOpenScene();
 
