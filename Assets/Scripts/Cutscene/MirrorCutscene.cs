@@ -171,6 +171,8 @@ public class MirrorCutscene : MonoBehaviour
     IEnumerator Run()
     {
         // 1. Fade in on the sad face, slow push-in.
+        yield return null;   // let the character's idle pose apply, then frame the face where the head really is
+        AimFaceShot();
         SetShot(shotFace);
         StartCoroutine(Fade(fadeImage, 1f, 0f, 2f));
         yield return Dolly(shotFace.position, shotFace.rotation,
@@ -484,6 +486,32 @@ public class MirrorCutscene : MonoBehaviour
     }
 
     // ------------------------------------------------------------------ helpers
+
+    [Header("Face shot framing")]
+    [Tooltip("Aim the first shot at the character's real head at runtime (works for any character model).")]
+    public bool aimFaceShotAtHead = true;
+    [Tooltip("Camera offset from the face: x = to the character's right, y = up, z = in front.")]
+    public Vector3 faceShotOffset = new Vector3(0.4f, -0.18f, 0.85f);
+    [Tooltip("How far above the head bone the face centre is (metres).")]
+    public float faceAimUp = 0.1f;
+
+    void AimFaceShot()
+    {
+        if (!aimFaceShotAtHead || !shotFace) return;
+        if (!head)
+        {
+            Debug.LogWarning("[MirrorCutscene] Face shot: no head assigned, keeping the built-in camera position.");
+            return;
+        }
+        Transform basis = character ? character : head;
+        Vector3 fwd = Vector3.ProjectOnPlane(basis.forward, Vector3.up).normalized;
+        if (fwd.sqrMagnitude < 0.01f) fwd = Vector3.forward;
+        Vector3 right = Vector3.Cross(Vector3.up, fwd);
+        Vector3 face = head.position + Vector3.up * faceAimUp + fwd * 0.06f;
+        Vector3 pos = face + right * faceShotOffset.x + Vector3.up * faceShotOffset.y + fwd * faceShotOffset.z;
+        shotFace.SetPositionAndRotation(pos, Quaternion.LookRotation(face - pos));
+        Debug.Log($"[MirrorCutscene] Face shot aimed at '{head.name}' at {face:F2}, camera at {pos:F2}.");
+    }
 
     void SetShot(Transform shot)
     {

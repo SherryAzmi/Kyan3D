@@ -7321,6 +7321,9 @@ MonoBehaviour:
   musicVolume: 0.35
   whisperMaxVolume: 0.85
   nextScene: SplitCamera
+  aimFaceShotAtHead: 1
+  faceShotOffset: {x: 0.32, y: -0.2, z: 0.95}
+  faceAimUp: 0.1
 --- !u!82 &1018200913
 AudioSource:
   m_ObjectHideFlags: 0
