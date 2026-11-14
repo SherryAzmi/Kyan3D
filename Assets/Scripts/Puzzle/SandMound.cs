@@ -11,6 +11,9 @@ public class SandMound : Interactable
     public Renderer revealedStone;
     public Material revealedMaterial;
 
+    /// <summary>Raised when this mound has been fully dug (used by puzzles other than the Broken Bridge).</summary>
+    public System.Action<SandMound> onDug;
+
     public bool Dug { get; private set; }
     float progress;
     Vector3 basePos, baseScale;
@@ -50,5 +53,6 @@ public class SandMound : Interactable
         gameObject.SetActive(false); // also removes it from Interactable.All
         if (revealedStone && revealedMaterial) revealedStone.sharedMaterial = revealedMaterial;
         if (BridgePuzzle.Instance) BridgePuzzle.Instance.OnMoundDug(this);
+        onDug?.Invoke(this);
     }
 }

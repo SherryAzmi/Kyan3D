@@ -17,6 +17,11 @@ public class MemoryRiver : Interactable
     public Material rippleMaterial;
     public Renderer water;
 
+    /// <summary>Raised on every Interact at the water: (this river, local z, true if the player was carrying something).</summary>
+    public System.Action<MemoryRiver, float, bool> onTouched;
+    /// <summary>Raised when a carried object has been sent to the other world: (object, from, to).</summary>
+    public System.Action<Carryable, MemoryRiver, MemoryRiver> onCrossed;
+
     public override float DistanceTo(Vector3 p)
     {
         Vector3 local = transform.InverseTransformPoint(p);
@@ -34,14 +39,17 @@ public class MemoryRiver : Interactable
     public override void Interact(PlayerInteractor p)
     {
         float z = Mathf.Clamp(transform.InverseTransformPoint(p.transform.position).z, zMin + 1f, zMax - 1f);
+        bool carrying = p.Carried;
         Ripple(z);
         if (other) other.Ripple(z);
+        onTouched?.Invoke(this, z, carrying);
 
         if (p.Carried && other)
         {
             var c = p.TakeCarried();
             c.PlaceAt(other.transform.TransformPoint(new Vector3(other.bankX, 0.35f, z)));
             if (BridgePuzzle.Instance) BridgePuzzle.Instance.OnObjectCrossedRiver(c, this, other);
+            onCrossed?.Invoke(c, this, other);
         }
     }
 
