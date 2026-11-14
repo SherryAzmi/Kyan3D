@@ -45,6 +45,26 @@ public class MemoryRiver : Interactable
         return transform.TransformPoint(local);
     }
 
+    /// <summary>
+    /// The water's edge on the player's own side, level with the player (for the guide beam): no need
+    /// to cross the river or walk to its end to reach it. Follows the river's curves.
+    /// </summary>
+    public Vector3 NearBankPoint(Vector3 from)
+    {
+        Vector3 local = transform.InverseTransformPoint(from);
+        float z = Mathf.Clamp(local.z, zMin + 1f, zMax - 1f);
+        float worldZ = transform.TransformPoint(new Vector3(0f, 0f, z)).z;
+        var waves = water ? water.GetComponent<RiverWaves>() : null;
+        bool curvy = waves;
+        float centre = curvy ? waves.meander * RiverWaves.Meander(worldZ) : 0f;
+        float half = halfWidth * (curvy ? RiverWaves.WidthScale(worldZ) : 1f);
+        float side = local.x >= centre ? 1f : -1f;
+        float x = centre + side * Mathf.Max(0.2f, half - 0.45f); // just inside the near edge
+        // stay inside the touch range of the straight interaction strip
+        x = Mathf.Clamp(x, -(halfWidth + range * 0.8f), halfWidth + range * 0.8f);
+        return transform.TransformPoint(new Vector3(x, 0f, z));
+    }
+
     public override string Prompt(PlayerInteractor p)
     {
         if (p.Carried) return canCarry ? $"{{I}} Let the river carry the {p.Carried.displayName}" : null;
@@ -70,9 +90,10 @@ public class MemoryRiver : Interactable
 
         if (p.Carried && other && canCarry)
         {
-            if (a) GameAudio.Play(a.arrive, other.transform.position);
             var c = p.TakeCarried();
             c.PlaceAt(other.transform.TransformPoint(new Vector3(other.bankX, 0.35f, z)));
+            // throw sound + neon splash here, then it pops out on the other bank with its own burst and sound
+            NeonFX.RiverThrow(transform.TransformPoint(new Vector3(0f, 0.05f, z)), c);
             if (BridgePuzzle.Instance) BridgePuzzle.Instance.OnObjectCrossedRiver(c, this, other);
             onCrossed?.Invoke(c, this, other);
         }

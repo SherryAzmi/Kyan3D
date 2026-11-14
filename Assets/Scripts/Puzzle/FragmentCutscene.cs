@@ -103,10 +103,14 @@ public class FragmentCutscene : MonoBehaviour
         if (GameAudio.I)
         {
             GameAudio.Play(GameAudio.I.bloom);
-            GameAudio.ChangeMusic(GameAudio.I.endingMusic, 3f, 0.5f);
+            // tender piano for the letter (falls back to the ending music)
+            GameAudio.ChangeMusic(GameAudio.I.letterMusic ? GameAudio.I.letterMusic : GameAudio.I.endingMusic, 3f, 0.35f);
         }
         Color sunFrom = sun ? sun.color : Color.white;
         float sunIntFrom = sun ? sun.intensity : 1f;
+        // neon magic stars spiral up around the flower while it grows, and keep twinkling under the note
+        if (focus) NeonFX.MagicStars(focus.position + Vector3.up * 0.05f, growTime + noteHoldTime + 2f + note.Length / 12f);
+        bool burst = false;
         for (float t = 0f; t < growTime; t += Time.deltaTime)
         {
             float k = t / growTime;
@@ -114,6 +118,11 @@ public class FragmentCutscene : MonoBehaviour
             if (flower) flower.localScale = Vector3.one * stem;
             float bloom = EaseOutBack(Mathf.Clamp01((k - 0.45f) / 0.55f));
             if (petals) petals.localScale = petalScale * bloom;
+            if (!burst && k > 0.6f && petals) // the petals open: a burst of stars from the flower's head
+            {
+                burst = true;
+                NeonFX.StarBurst(petals.position);
+            }
             if (flowerLight) flowerLight.intensity = 2.5f * Mathf.Clamp01(k * 1.5f);
             if (sun)
             {
@@ -128,7 +137,10 @@ public class FragmentCutscene : MonoBehaviour
         StartCoroutine(Fade(noteBackdrop, 0f, backdropAlpha, 1f));
         yield return Fade(headerText, 0f, 1f, 1f);
         yield return new WaitForSeconds(0.4f);
-        yield return Fade(noteText, 0f, 1f, 1.6f);
+        // the note is written like a letter: handwriting, letter by letter, with the sound of the pen
+        LetterWriter.UseHandwriting(noteText);
+        SetAlpha(noteText, 1f);
+        yield return LetterWriter.Write(noteText, note);
         yield return new WaitForSeconds(noteHoldTime);
         StartCoroutine(Fade(headerText, 1f, 0f, 1f));
         StartCoroutine(Fade(noteBackdrop, backdropAlpha, 0f, 1f));

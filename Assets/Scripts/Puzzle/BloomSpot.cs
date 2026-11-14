@@ -41,6 +41,10 @@ public class BloomSpot : Interactable
         {
             Bloomed = true;
             if (a) GameAudio.Play(a.bloom, transform.position);
+            // the bloom opens in a burst of neon stars, and a few keep spiralling around it
+            Vector3 head = bud ? bud.position : top ? top.position : transform.position + Vector3.up;
+            NeonFX.StarBurst(head);
+            NeonFX.MagicStars(transform.position + Vector3.up * 0.05f, 4f, 0.9f);
             if (MirrorPuzzle.Instance) MirrorPuzzle.Instance.OnBloomed(this);
         }
     }

@@ -23,6 +23,9 @@ public class CharacterAnimator : MonoBehaviour
     float speed;
     float carryWeight;
     Quaternion restRotation;
+    CarryIK carryIK;
+    Transform carriedItem;
+    float carriedHalfWidth = 0.14f;
 
     static readonly int SpeedId = Animator.StringToHash("Speed");
     static readonly int GroundedId = Animator.StringToHash("Grounded");
@@ -43,6 +46,13 @@ public class CharacterAnimator : MonoBehaviour
         {
             animator.applyRootMotion = true;
             if (!animator.GetComponent<RootMotionSink>()) animator.gameObject.AddComponent<RootMotionSink>();
+            // players hold carried things with both hands (IK), whatever the legs are doing
+            if (interactor && animator.isHuman)
+            {
+                carryIK = animator.GetComponent<CarryIK>();
+                if (!carryIK) carryIK = animator.gameObject.AddComponent<CarryIK>();
+                carryIK.body = transform;
+            }
         }
     }
 
@@ -81,6 +91,17 @@ public class CharacterAnimator : MonoBehaviour
         animator.SetBool(GroundedId, grounded);
         animator.SetBool(ActionId, action);
         carryWeight = Mathf.MoveTowards(carryWeight, carrying && !action ? 1f : 0f, dt * 4f);
+        if (carryIK)
+        {
+            var item = carrying ? interactor.Carried.transform : null;
+            if (item != carriedItem)
+            {
+                carriedItem = item;
+                if (item) carriedHalfWidth = GripHalfWidth(item);
+            }
+            carryIK.weight = carryWeight;
+            carryIK.halfGrip = carriedHalfWidth;
+        }
 
         if (faceMovement)
         {
@@ -216,9 +237,54 @@ public class CharacterAnimator : MonoBehaviour
         if (groundFeet) GroundFeet();
         Slump();
         if (carryWeight <= 0.001f || !animator.isHuman) return;
+        if (carryIK)
+        {
+            // the hands already hold the grip (IK); put the item right between them, after the posture tweaks
+            PlaceBetweenHands();
+            return;
+        }
         // Lift both arms forward, as if holding something in front of the chest.
         Lift(HumanBodyBones.LeftUpperArm, HumanBodyBones.LeftLowerArm, 1f);
         Lift(HumanBodyBones.RightUpperArm, HumanBodyBones.RightLowerArm, -1f);
+    }
+
+    void PlaceBetweenHands()
+    {
+        if (!carriedItem || !interactor || interactor.Carried == null || carriedItem != interactor.Carried.transform) return;
+        var l = animator.GetBoneTransform(HumanBodyBones.LeftHand);
+        var r = animator.GetBoneTransform(HumanBodyBones.RightHand);
+        if (!l || !r) return;
+        Vector3 between = (l.position + r.position) * 0.5f + transform.forward * 0.05f;
+        // the item's pivot may not be its centre: move it so its visual centre sits between the hands
+        Vector3 centreOffset = carriedItem.position - VisualCentre(carriedItem);
+        carriedItem.position = Vector3.Lerp(carryIK.GripCentre, between, carryWeight) + centreOffset;
+        carriedItem.rotation = Quaternion.LookRotation(transform.forward, Vector3.up);
+    }
+
+    static Vector3 VisualCentre(Transform item)
+    {
+        bool any = false;
+        var b = new Bounds(item.position, Vector3.zero);
+        foreach (var rend in item.GetComponentsInChildren<MeshRenderer>())
+        {
+            if (!rend.enabled) continue;
+            if (!any) { b = rend.bounds; any = true; } else b.Encapsulate(rend.bounds);
+        }
+        return any ? b.center : item.position;
+    }
+
+    /// <summary>Half the grip width: hands go on the sides of the item.</summary>
+    float GripHalfWidth(Transform item)
+    {
+        bool any = false;
+        var b = new Bounds();
+        foreach (var rend in item.GetComponentsInChildren<MeshRenderer>())
+        {
+            if (!rend.enabled) continue;
+            if (!any) { b = rend.bounds; any = true; } else b.Encapsulate(rend.bounds);
+        }
+        float half = any ? Mathf.Max(b.extents.x, b.extents.z) : 0.12f;
+        return Mathf.Clamp(half + 0.04f, 0.1f, 0.3f);
     }
 
     void Lift(HumanBodyBones upper, HumanBodyBones lower, float side)

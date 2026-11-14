@@ -29,10 +29,12 @@ public class PlayerRespawn : MonoBehaviour
         if (y > killY) return;
 
         int side = GameAudio.SideOf(transform.position);
+        Vector3 from = transform.position;
         cc.enabled = false;
         transform.position = respawnPoint;
         cc.enabled = true;
         falling = false;
         if (a) GameAudio.Play(a.hurt, side, 1f, Random.Range(0.95f, 1.05f));
+        NeonFX.Respawn(from, respawnPoint, side); // red sparks where it hurt, a ring of light + shimmer where you come back
     }
 }

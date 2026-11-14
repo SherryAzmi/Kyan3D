@@ -25,11 +25,17 @@ public class PuzzleHUD : MonoBehaviour
         if (barFills[side] && progress >= 0f) barFills[side].anchorMax = new Vector2(Mathf.Clamp01(progress), 1f);
     }
 
+    [Tooltip("Every message stays at least this long, so there is time to read it.")]
+    public float minMessageSeconds = 10f;
+
     public void ShowMessage(int side, string text, float seconds = 4f)
     {
         if (!messages[side]) return;
+        bool isNew = messages[side].text != text || Time.time > messageUntil[side];
         messages[side].text = text;
-        messageUntil[side] = Time.time + seconds;
+        messageUntil[side] = Time.time + Mathf.Max(seconds, minMessageSeconds);
+        // a soft chime on that player's side: "something new to read"
+        if (isNew && !string.IsNullOrEmpty(text) && GameAudio.I) GameAudio.Play(GameAudio.I.message, side, 0.8f);
     }
 
     public void ShowBoth(string text, float seconds = 4f)

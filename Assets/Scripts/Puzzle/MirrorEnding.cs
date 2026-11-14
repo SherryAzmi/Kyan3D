@@ -93,7 +93,8 @@ public class MirrorEnding : MonoBehaviour
     IEnumerator Run()
     {
         foreach (var b in disableOnPlay) if (b) b.enabled = false;
-        if (GameAudio.I) GameAudio.ChangeMusic(GameAudio.I.endingMusic, 4f, 0.25f);
+        // the finale has its own piano theme (falls back to the ending music)
+        if (GameAudio.I) GameAudio.ChangeMusic(GameAudio.I.finaleMusic ? GameAudio.I.finaleMusic : GameAudio.I.endingMusic, 4f, 0.25f);
         if (headerText) headerText.text = header;
         if (noteText) noteText.text = note;
         if (closingText) closingText.text = closing;
@@ -135,7 +136,10 @@ public class MirrorEnding : MonoBehaviour
         yield return new WaitForSeconds(1f);
         StartCoroutine(Fade(noteBackdrop, 0f, 0.5f, 1f));
         yield return Fade(headerText, 0f, 1f, 1f);
-        yield return Fade(noteText, 0f, 1f, 1.6f);
+        // the last note is written like a letter too
+        LetterWriter.UseHandwriting(noteText);
+        SetAlpha(noteText, 1f);
+        yield return LetterWriter.Write(noteText, note);
         yield return new WaitForSeconds(noteHoldTime);
         StartCoroutine(Fade(headerText, 1f, 0f, 1f));
         StartCoroutine(Fade(noteBackdrop, 0.5f, 0f, 1f));

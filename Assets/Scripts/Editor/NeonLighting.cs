@@ -44,7 +44,124 @@ public static class NeonLighting
             lights++;
         }
         bool bloom = AddBloom();
-        return $" neon beams={beams}, player lights={lights}, bloom={bloom}";
+        EnsureNeonFX();
+        return $" neon beams={beams}, player lights={lights}, bloom={bloom}, neonFX=on";
+    }
+
+    // ------------------------------------------------------------------ neon particles (gem, river, respawn)
+
+    const string DotTex = "Assets/Textures/Life/neon_dot.png";
+
+    static void EnsureNeonFX()
+    {
+        var scene = EditorSceneManager.GetActiveScene();
+        GameObject go = null;
+        foreach (var r in scene.GetRootGameObjects()) if (r.name == "Neon FX") go = r;
+        if (!go) go = new GameObject("Neon FX");
+        var fx = go.GetComponent<NeonFX>();
+        if (!fx) fx = go.AddComponent<NeonFX>();
+
+        var pm = AssetDatabase.LoadAssetAtPath<Material>($"{MatDir}/M_Neon_Particle.mat");
+        if (!pm)
+        {
+            pm = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
+            AssetDatabase.CreateAsset(pm, $"{MatDir}/M_Neon_Particle.mat");
+        }
+        pm.SetTexture("_BaseMap", Dot());
+        pm.SetColor("_BaseColor", new Color(2f, 2f, 2f, 1f));
+        pm.SetFloat("_Surface", 1f);
+        pm.SetFloat("_Blend", 2f);
+        pm.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+        pm.SetFloat("_DstBlend", (float)BlendMode.One);
+        pm.SetFloat("_ZWrite", 0f);
+        pm.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        pm.SetOverrideTag("RenderType", "Transparent");
+        pm.renderQueue = (int)RenderQueue.Transparent + 2;
+        EditorUtility.SetDirty(pm);
+
+        fx.particleMat = pm;
+
+        var sm = AssetDatabase.LoadAssetAtPath<Material>($"{MatDir}/M_Neon_Star.mat");
+        if (!sm)
+        {
+            sm = new Material(pm);
+            AssetDatabase.CreateAsset(sm, $"{MatDir}/M_Neon_Star.mat");
+        }
+        sm.CopyPropertiesFromMaterial(pm);
+        sm.SetTexture("_BaseMap", Star());
+        sm.SetColor("_BaseColor", new Color(1.5f, 1.5f, 1.5f, 1f)); // bright, but keeps each star's colour on light sand
+        EditorUtility.SetDirty(sm);
+        fx.starMat = sm;
+        fx.gemMat = BeamMat("M_Neon_Gem", new Color(0.35f, 1f, 0.45f) * 2.5f, 1f, false);
+        // the gem is solid: opaque unlit, so it reads as a glowing stone
+        fx.gemMat.SetFloat("_Surface", 0f);
+        fx.gemMat.SetFloat("_SrcBlend", (float)BlendMode.One);
+        fx.gemMat.SetFloat("_DstBlend", (float)BlendMode.Zero);
+        fx.gemMat.SetFloat("_ZWrite", 1f);
+        fx.gemMat.SetFloat("_Cull", 2f);
+        fx.gemMat.DisableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        fx.gemMat.SetOverrideTag("RenderType", "Opaque");
+        fx.gemMat.renderQueue = (int)RenderQueue.Geometry;
+        fx.gemHaloMat = BeamMat("M_Neon_Gem_Halo", new Color(0.4f, 1f, 0.6f) * 1.6f, 0.7f, true);
+        EditorUtility.SetDirty(fx);
+    }
+
+    const string StarTex = "Assets/Textures/Life/neon_star.png";
+
+    /// <summary>A four-point sparkle: two thin glowing rays crossed, a smaller diagonal pair and a bright core.</summary>
+    static Texture2D Star()
+    {
+        var t = AssetDatabase.LoadAssetAtPath<Texture2D>(StarTex);
+        if (t) return t;
+        const int S = 128;
+        var tex = new Texture2D(S, S, TextureFormat.RGBA32, false);
+        for (int y = 0; y < S; y++)
+            for (int x = 0; x < S; x++)
+            {
+                float u = (x - S * 0.5f + 0.5f) / (S * 0.5f), v = (y - S * 0.5f + 0.5f) / (S * 0.5f);
+                float ax = Mathf.Abs(u), ay = Mathf.Abs(v);
+                float rays = Mathf.Exp(-ay * ay * 900f) * Mathf.Pow(Mathf.Clamp01(1f - ax), 2.5f)
+                           + Mathf.Exp(-ax * ax * 900f) * Mathf.Pow(Mathf.Clamp01(1f - ay), 2.5f);
+                float d1 = (u - v) * 0.7071f, d2 = (u + v) * 0.7071f;
+                float diag = 0.45f * (Mathf.Exp(-d1 * d1 * 1400f) * Mathf.Pow(Mathf.Clamp01(1f - Mathf.Abs(d2) * 1.8f), 3f)
+                                    + Mathf.Exp(-d2 * d2 * 1400f) * Mathf.Pow(Mathf.Clamp01(1f - Mathf.Abs(d1) * 1.8f), 3f));
+                float r2 = u * u + v * v;
+                float core = Mathf.Exp(-r2 * 60f) + 0.35f * Mathf.Exp(-r2 * 9f);
+                tex.SetPixel(x, y, new Color(1f, 1f, 1f, Mathf.Clamp01(rays + diag + core)));
+            }
+        Directory.CreateDirectory(Path.GetDirectoryName(StarTex));
+        File.WriteAllBytes(StarTex, tex.EncodeToPNG());
+        Object.DestroyImmediate(tex);
+        AssetDatabase.ImportAsset(StarTex);
+        var imp = (TextureImporter)AssetImporter.GetAtPath(StarTex);
+        imp.alphaIsTransparency = true;
+        imp.wrapMode = TextureWrapMode.Clamp;
+        imp.SaveAndReimport();
+        return AssetDatabase.LoadAssetAtPath<Texture2D>(StarTex);
+    }
+
+    static Texture2D Dot()
+    {
+        var t = AssetDatabase.LoadAssetAtPath<Texture2D>(DotTex);
+        if (t) return t;
+        const int S = 64;
+        var tex = new Texture2D(S, S, TextureFormat.RGBA32, false);
+        for (int y = 0; y < S; y++)
+            for (int x = 0; x < S; x++)
+            {
+                float d = new Vector2(x - S * 0.5f + 0.5f, y - S * 0.5f + 0.5f).magnitude / (S * 0.5f);
+                float a = Mathf.Clamp01(Mathf.Exp(-d * d * 9f) + 0.6f * Mathf.Exp(-d * d * 60f)); // bright centre, soft glow
+                tex.SetPixel(x, y, new Color(1f, 1f, 1f, Mathf.Clamp01(a) * Mathf.Clamp01((1f - d) * 4f)));
+            }
+        Directory.CreateDirectory(Path.GetDirectoryName(DotTex));
+        File.WriteAllBytes(DotTex, tex.EncodeToPNG());
+        Object.DestroyImmediate(tex);
+        AssetDatabase.ImportAsset(DotTex);
+        var imp = (TextureImporter)AssetImporter.GetAtPath(DotTex);
+        imp.alphaIsTransparency = true;
+        imp.wrapMode = TextureWrapMode.Clamp;
+        imp.SaveAndReimport();
+        return AssetDatabase.LoadAssetAtPath<Texture2D>(DotTex);
     }
 
     // ------------------------------------------------------------------ beams
