@@ -28,6 +28,21 @@ public class CameraOcclusionFader : MonoBehaviour
         public ShadowCastingMode shadow;
         public float alpha = 1f;
         public bool blocking, usingFaded, noFade;
+        public bool water; // river water, waterfall sheet, mist and spray: fade when the camera gets into or very close to them
+    }
+
+    const float WaterDistance = 1.5f; // camera closer than this to water (or inside it): the water fades
+
+    /// <summary>River water, waterfalls, mist and spray (not the river bed, banks or rocks).</summary>
+    static bool IsWater(Renderer r)
+    {
+        string n = r.name.ToLowerInvariant();
+        if (n.Contains("rock") || n.Contains("stone") || n.Contains("bed") || n.Contains("bank")) return false;
+        if (r.GetComponentInParent<Waterfall>()) return true;
+        if (n.Contains("water") || n.Contains("mist") || n.Contains("spray") || n.Contains("falls")) return true;
+        foreach (var m in r.sharedMaterials)
+            if (m && m.name.ToLowerInvariant().Contains("water")) return true;
+        return false;
     }
 
     struct View { public Camera cam; public Transform player; }
@@ -73,15 +88,18 @@ public class CameraOcclusionFader : MonoBehaviour
         entries.Clear();
         foreach (var r in FindObjectsByType<Renderer>(FindObjectsSortMode.None))
         {
-            if (!(r is MeshRenderer) || !r.enabled) continue;
+            bool water = (r is MeshRenderer || r is ParticleSystemRenderer) && IsWater(r);
+            if (!water && (!(r is MeshRenderer) || !r.enabled)) continue;
             if (r.GetComponentInParent<SoulMovement>() || r.GetComponentInParent<Carryable>()) continue;
             var b = r.bounds;
-            if (b.size.x > MaxSize || b.size.z > MaxSize || b.size.y > MaxSize) continue;
+            if (!water && (b.size.x > MaxSize || b.size.z > MaxSize || b.size.y > MaxSize)) continue;
+            // water can be hidden or still empty at load (the river fills later): judge it by where it is, not its size
+            Vector3 at = water ? r.transform.position : b.center;
             bool near = false;
             foreach (var c in centres)
-                if (Mathf.Abs(b.center.x - c.x) < Reach && Mathf.Abs(b.center.z - c.z) < Reach) { near = true; break; }
+                if (Mathf.Abs(at.x - c.x) < Reach && Mathf.Abs(at.z - c.z) < Reach) { near = true; break; }
             if (!near) continue;
-            entries.Add(new Entry { r = r, bounds = b, original = r.sharedMaterials, shadow = r.shadowCastingMode });
+            entries.Add(new Entry { r = r, bounds = b, original = r.sharedMaterials, shadow = r.shadowCastingMode, water = water });
         }
 
     }
@@ -104,6 +122,14 @@ public class CameraOcclusionFader : MonoBehaviour
             foreach (var e in entries)
             {
                 if (!e.r) continue;
+                if (e.water)
+                {
+                    // camera in or right next to water (live bounds: the river grows as it fills)
+                    var wb = e.r.bounds;
+                    if (wb.size.sqrMagnitude > 0.0001f && (wb.ClosestPoint(from) - from).sqrMagnitude < WaterDistance * WaterDistance)
+                        e.blocking = true;
+                    continue;
+                }
                 var b = e.bounds;
                 b.Expand(Padding * 2f);
                 if (b.Contains(from) || b.IntersectRay(ray, out float hit) && hit < len - 0.3f) e.blocking = true;
@@ -124,6 +150,7 @@ public class CameraOcclusionFader : MonoBehaviour
     void Apply(Entry e)
     {
         if (e.alpha >= 1f) { Restore(e); return; }
+        if (e.r is ParticleSystemRenderer) { e.r.enabled = e.alpha > 0.55f; return; } // mist and spray just switch off
         if (e.noFade || e.faded == null && (e.noFade = !MakeFaded(e)))
         {
             // shader that can't fade: hide the mesh while it blocks, keep its shadow
@@ -178,6 +205,7 @@ public class CameraOcclusionFader : MonoBehaviour
     {
         if (!e.r) return;
         e.alpha = 1f;
+        if (e.r is ParticleSystemRenderer) e.r.enabled = true;
         if (e.usingFaded)
         {
             e.r.sharedMaterials = e.original;
