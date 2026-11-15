@@ -76,7 +76,7 @@ public class WorldPrompt : MonoBehaviour
         for (int side = 0; side < 2; side++)
         {
             var b = bubbles[side];
-            bool want = Time.frameCount - b.frame <= 1 && !PauseMenu.IsPaused && !string.IsNullOrEmpty(b.prompt);
+            bool want = Time.frameCount - b.frame <= 1 && !PauseMenu.IsPaused && !PauseMenu.UiHidden && !string.IsNullOrEmpty(b.prompt);
             Camera cam = want ? CameraFor(side) : null;
             Vector3 sp = Vector3.zero;
             if (cam)

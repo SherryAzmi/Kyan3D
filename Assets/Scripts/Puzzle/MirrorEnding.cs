@@ -90,6 +90,7 @@ public class MirrorEnding : MonoBehaviour
     {
         if (playing) return;
         playing = true;
+        PauseMenu.SetUiHidden(true); // no corner buttons or prompts over the ending
         StartCoroutine(Run());
     }
 
@@ -281,6 +282,7 @@ public class MirrorEnding : MonoBehaviour
 
     void OnDestroy()
     {
+        PauseMenu.SetUiHidden(false);
         if (reflMat) Destroy(reflMat);
         if (wholeMat) Destroy(wholeMat);
     }

@@ -74,8 +74,11 @@ public class FragmentCutscene : MonoBehaviour
     {
         if (playing) return;
         playing = true;
+        PauseMenu.SetUiHidden(true); // no corner buttons or prompts over the cutscene
         StartCoroutine(Run());
     }
+
+    void OnDestroy() => PauseMenu.SetUiHidden(false); // the UI comes back when the cutscene is over
 
     IEnumerator Run()
     {
@@ -153,6 +156,7 @@ public class FragmentCutscene : MonoBehaviour
         {
             Debug.LogError($"[FragmentCutscene] Scene '{nextScene}' is not in the build scene list. " +
                            "Add it under File > Build Profiles > Scene List.");
+            PauseMenu.SetUiHidden(false);
             yield break;
         }
         SceneFadeIn.Request();

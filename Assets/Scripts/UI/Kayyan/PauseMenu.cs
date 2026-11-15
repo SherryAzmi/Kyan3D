@@ -19,6 +19,14 @@ public class PauseMenu : MonoBehaviour
 
     public static bool IsPaused { get; private set; }
 
+    /// <summary>True while a cutscene plays: the corner buttons and the floating prompts are hidden.</summary>
+    public static bool UiHidden { get; private set; }
+
+    /// <summary>Hide the game UI (corner buttons, prompts) when a cutscene starts, show it again when it ends.</summary>
+    public static void SetUiHidden(bool hidden) => UiHidden = hidden;
+
+    readonly GameObject[] hudRows = new GameObject[2];
+
     enum Panel { None, Pause, Settings, Help1, Help2 }
 
     Canvas canvas;
@@ -47,6 +55,7 @@ public class PauseMenu : MonoBehaviour
     static void Install(Scene s)
     {
         IsPaused = false;
+        UiHidden = false;
         if (s.name == MenuScene) return;
         if (FindFirstObjectByType<PauseMenu>()) return;
         new GameObject("Kayyan Pause").AddComponent<PauseMenu>();
@@ -123,6 +132,7 @@ public class PauseMenu : MonoBehaviour
         {
             int n = side + 1;
             var row = KUI.Row(canvas.transform, "Player " + n + " corner", 14f);
+            hudRows[side] = row.gameObject;
             var rt = (RectTransform)row.transform;
             rt.anchorMin = rt.anchorMax = new Vector2(side == 0 ? 0f : 0.5f, 1f);
             rt.pivot = new Vector2(0f, 1f);
@@ -264,6 +274,11 @@ public class PauseMenu : MonoBehaviour
 
     void Update()
     {
+        // corner buttons are hidden during cutscenes (unless a panel is open, so it can still be closed)
+        bool showHud = !UiHidden || open != Panel.None;
+        for (int i = 0; i < 2; i++)
+            if (hudRows[i] && hudRows[i].activeSelf != showHud) hudRows[i].SetActive(showHud);
+
         var kb = Keyboard.current;
         bool esc = kb != null && kb.escapeKey.wasPressedThisFrame;
         bool start = false, back = false;
