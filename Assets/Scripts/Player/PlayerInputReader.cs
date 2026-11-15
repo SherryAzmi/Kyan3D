@@ -70,6 +70,7 @@ public class PlayerInputReader : MonoBehaviour
     }
 
     Gamepad lastPad;
+    KeyboardDebugLayout lastLayout = (KeyboardDebugLayout)(-1);
 
     void Update()
     {
@@ -78,6 +79,17 @@ public class PlayerInputReader : MonoBehaviour
 
         var pad = Pad;
         if (pad != lastPad) { OnPadChanged(pad); lastPad = pad; }
+
+        // Say in the Console how this player is controlled, whenever that changes (a controller plugged in or out).
+        var layout = ActiveLayout;
+        if (layout != lastLayout)
+        {
+            lastLayout = layout;
+            string how = pad != null ? $"controller #{gamepadIndex + 1}" : "no controller";
+            string keys = layout == KeyboardDebugLayout.WasdMouse ? "keyboard WASD + mouse"
+                        : layout == KeyboardDebugLayout.Arrows ? "keyboard arrows" : "no keyboard";
+            Debug.Log($"[Input] {soul} Soul: {how}, {keys}.");
+        }
 
         if (PauseMenu.IsPaused) return; // pause / settings / help panel is open: ignore the game controls
 
@@ -142,7 +154,7 @@ public class PlayerInputReader : MonoBehaviour
     {
         if (pad == null)
         {
-            Debug.Log($"[Input] {soul} Soul: controller #{gamepadIndex + 1} not connected — using keyboard ({keyboardDebug}).");
+            Debug.Log($"[Input] {soul} Soul: controller #{gamepadIndex + 1} not connected — using keyboard ({ActiveLayout}).");
             return;
         }
         Debug.Log($"[Input] {soul} Soul uses controller #{gamepadIndex + 1}: {pad.displayName} ({pad.layout})");

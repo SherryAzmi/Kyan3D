@@ -52,7 +52,7 @@ public class ControllerStatusUI : MonoBehaviour
             connectedTime = -1f;
             label.enabled = true;
             label.color = new Color(1f, 0.55f, 0.45f);
-            label.text = $"{who}: plug in controller #{player.gamepadIndex + 1}\n(keyboard test: {KeyboardHint(player.keyboardDebug)})";
+            label.text = $"{who}: plug in controller #{player.gamepadIndex + 1}\n(keyboard test: {KeyboardHint(player.ActiveLayout)})";
         }
         else
         {
