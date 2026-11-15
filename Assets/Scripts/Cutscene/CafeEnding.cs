@@ -83,6 +83,9 @@ public class CafeEnding : MonoBehaviour
     [Header("Timing")]
     public float walkSpeed = 1.35f;
 
+    /// <summary>The music volume with the player's Music setting applied.</summary>
+    float MusicLevel => musicVolume * GameSettings.Music;
+
     enum Cup { OnCounter, InHand, OnTable }
     enum Hands { Free, Reach, Carry, Table, Sip }
     Cup cupState = Cup.OnCounter;
@@ -123,7 +126,7 @@ public class CafeEnding : MonoBehaviour
 
     IEnumerator Run()
     {
-        if (music) { music.volume = 0f; music.Play(); StartCoroutine(Volume(music, musicVolume * 0.55f, 4f)); }
+        if (music) { music.volume = 0f; music.Play(); StartCoroutine(Volume(music, MusicLevel * 0.55f, 4f)); }
 
         // 1. Back from white: at the mirror, the café still asleep.
         yield return Fade(fadeImage, 1f, 0f, 2.2f);
@@ -134,7 +137,7 @@ public class CafeEnding : MonoBehaviour
         yield return MoveCamera(shotShoulder, shotReflection, 3.2f);
         yield return new WaitForSeconds(0.6f);
         if (sfx && awakenClip) sfx.PlayOneShot(awakenClip, 0.8f);
-        StartCoroutine(Volume(music, musicVolume, 5f));
+        StartCoroutine(Volume(music, MusicLevel, 5f));
         for (float t = 0f; t < 2.6f; t += Time.deltaTime)
         {
             Eyes(Mathf.SmoothStep(0f, 1f, t / 2.6f));
@@ -207,18 +210,9 @@ public class CafeEnding : MonoBehaviour
         Cut(shotFinalEnd);
         StartCoroutine(Drift(shotFinalEnd, 0.6f, 8f));
         yield return new WaitForSeconds(1f);
-        yield return Fade(theEndText, 0f, 1f, 2.4f);
-        yield return new WaitForSeconds(1.6f);
-        if (buttons)
-        {
-            for (float t = 0f; t < 1f; t += Time.deltaTime) { buttons.alpha = t; yield return null; }
-            buttons.alpha = 1f;
-            buttons.interactable = true;
-            buttons.blocksRaycasts = true;
-        }
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-        if (EventSystem.current && playAgainButton) EventSystem.current.SetSelectedGameObject(playAgainButton.gameObject);
+        yield return new WaitForSeconds(2.2f);
+        // the new end panel (title, closing line, Play again / Main menu / Quit) replaces the old plain text and buttons
+        EndPanel.Show();
     }
 
     IEnumerator WalkTo(Vector3 target)

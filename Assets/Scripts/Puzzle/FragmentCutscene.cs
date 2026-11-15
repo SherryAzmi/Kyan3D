@@ -59,6 +59,7 @@ public class FragmentCutscene : MonoBehaviour
 
     void Awake()
     {
+        NotePanel.Replace(ref headerText, ref noteText, ref noteBackdrop); // the quote sits on a paper panel
         if (cinematicCam) cinematicCam.enabled = false;
         if (flower) flower.localScale = Vector3.zero;
         if (petals) { petalScale = petals.localScale; petals.localScale = Vector3.zero; }

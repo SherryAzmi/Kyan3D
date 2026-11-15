@@ -15,7 +15,7 @@ public class MirrorSlot : Interactable
         if (!P.HalfPlaced(world))
             return p.Carried ? "{I} Place the mirror shard" : "The mirror is missing a piece";
         if (!P.HalfPlaced(1 - world)) return "Waiting for your other self's half...";
-        return P.OtherHolding(world) ? "Hold {P}! Your other self is holding too" : "Hold {P} together to join the mirror";
+        return P.OtherHolding(world) ? "Hold {P} now! Your other self is holding too" : "Hold {P} together to join the mirror";
     }
 
     public override bool HandlesInteract(PlayerInteractor p) => P && !P.HalfPlaced(world) && p.Carried;

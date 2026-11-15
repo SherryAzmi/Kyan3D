@@ -9,6 +9,8 @@ using UnityEngine.UI;
 public class ControllerStatusUI : MonoBehaviour
 {
     public PlayerInputReader player;
+    [Tooltip("Show the \"plug in controller\" / \"connected\" notice at the top of the half. Off by default.")]
+    public bool showStatus = false;
     public Text label;
     [Tooltip("Hide the label this many seconds after the controller connects.")]
     public float hideAfterConnected = 4f;
@@ -39,7 +41,9 @@ public class ControllerStatusUI : MonoBehaviour
 
     void Update()
     {
-        if (!label || !player) return;
+        if (!label) return;
+        if (!showStatus) { label.enabled = false; return; } // the red/green controller notice is hidden
+        if (!player) return;
         var pad = player.Pad;
         string who = player.soul == SoulType.Light ? "P1 Present" : "P2 Future";
 

@@ -44,15 +44,49 @@ public class PuzzleHUD : MonoBehaviour
         ShowMessage(1, text, seconds);
     }
 
+    // Each message sits on a paper panel (same look as the menus) instead of loose white text.
+    readonly RectTransform[] cards = new RectTransform[2];
+    readonly CanvasGroup[] cardGroups = new CanvasGroup[2];
+
+    void BuildCard(int i)
+    {
+        var text = messages[i];
+        var tr = text.rectTransform;
+        var card = KUI.Box(text.transform.parent, "Message Panel " + (i + 1), KUI.Paper, 26, 4f, 7f);
+        card.SetSiblingIndex(text.transform.GetSiblingIndex()); // behind the text
+        card.anchorMin = card.anchorMax = new Vector2((tr.anchorMin.x + tr.anchorMax.x) * 0.5f, tr.anchorMax.y);
+        card.pivot = new Vector2(0.5f, 1f);
+        foreach (var g in card.GetComponentsInChildren<UnityEngine.UI.Graphic>(true)) g.raycastTarget = false;
+        cardGroups[i] = card.gameObject.AddComponent<CanvasGroup>();
+        cardGroups[i].blocksRaycasts = false;
+        cards[i] = card;
+
+        text.horizontalOverflow = HorizontalWrapMode.Wrap;
+        text.verticalOverflow = VerticalWrapMode.Overflow;
+        foreach (var fx in text.GetComponents<UnityEngine.UI.Shadow>()) fx.enabled = false; // Shadow and Outline
+    }
+
     void Update()
     {
         for (int i = 0; i < 2; i++)
         {
             if (!messages[i]) continue;
+            if (!cards[i]) BuildCard(i);
+
             float left = messageUntil[i] - Time.time;
-            var c = messages[i].color;
-            c.a = Mathf.Clamp01(left / 0.6f);
-            messages[i].color = c;
+            float a = Mathf.Clamp01(left / 0.6f);
+            bool has = !string.IsNullOrEmpty(messages[i].text) && a > 0.001f;
+            messages[i].color = new Color(KUI.Ink.r, KUI.Ink.g, KUI.Ink.b, a);
+            cardGroups[i].alpha = a;
+            cards[i].gameObject.SetActive(has);
+            if (!has) continue;
+
+            var tr = messages[i].rectTransform;
+            float maxW = Mathf.Max(200f, tr.rect.width - 40f);
+            float w = Mathf.Min(messages[i].preferredWidth, maxW);
+            float h = messages[i].preferredHeight;
+            cards[i].sizeDelta = new Vector2(w + 90f, h + 40f);
+            cards[i].anchoredPosition = new Vector2(tr.anchoredPosition.x, tr.anchoredPosition.y + 20f);
         }
     }
 }

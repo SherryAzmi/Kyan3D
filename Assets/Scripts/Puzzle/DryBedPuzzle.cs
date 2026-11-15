@@ -62,6 +62,17 @@ public class DryBedPuzzle : MonoBehaviour
     public FragmentCutscene fragmentCutscene;
     public Color desertRiverBrightColor = new Color(0.25f, 0.85f, 1f, 0.7f);
 
+    [Header("Quick puzzle")]
+    [Tooltip("How many mounds must be dug before the frame appears (was all 3).")]
+    public int moundsRequired = 1;
+    [Tooltip("The river never takes longer than this to fill (seconds).")]
+    public float maxFillTime = 2.5f;
+    [Tooltip("Hold-Power speed while this puzzle is open (1 = the times set on each object, 4 = four times faster).")]
+    public float holdSpeed = 4f;
+
+    int Needed => Mathf.Clamp(moundsRequired, 1, Mathf.Max(1, mounds.Length));
+    float prevHoldSpeed = 2f;
+
     float fill;
     bool filling;
     int moundsDug;
@@ -72,6 +83,10 @@ public class DryBedPuzzle : MonoBehaviour
     void Awake()
     {
         Instance = this;
+
+        fillTime = Mathf.Min(fillTime, maxFillTime);
+        prevHoldSpeed = PlayerInteractor.HoldSpeed;
+        PlayerInteractor.HoldSpeed = Mathf.Max(prevHoldSpeed, holdSpeed);
 
         patchScales = new Vector3[wetPatches.Length];
         for (int i = 0; i < wetPatches.Length; i++)
@@ -101,7 +116,7 @@ public class DryBedPuzzle : MonoBehaviour
 
     void OnDestroy()
     {
-        if (Instance == this) Instance = null;
+        if (Instance == this) { Instance = null; PlayerInteractor.HoldSpeed = prevHoldSpeed; }
     }
 
     // ---------------------------------------------------------------- update: river fill + guidance
@@ -129,7 +144,7 @@ public class DryBedPuzzle : MonoBehaviour
         else if (!signalSent) d = RiverPointNear(desertRiver, present ? present.position : Vector3.zero);
         else if (!gateOpened) { if (wheel) f = wheel.transform.position; }
         else if (!riverFilled) { }
-        else if (moundsDug < mounds.Length) d = NearestUndugMound();
+        else if (moundsDug < Needed) d = NearestUndugMound();
         else if (frame)
         {
             var holder = frame.Holder;
@@ -234,9 +249,10 @@ public class DryBedPuzzle : MonoBehaviour
     void OnMoundDug(SandMound m)
     {
         moundsDug++;
-        if (moundsDug < mounds.Length)
+        if (moundsDug > Needed) return; // the frame is already out
+        if (moundsDug < Needed)
         {
-            hud?.ShowMessage(0, $"The wet sand gives way... ({moundsDug}/{mounds.Length})");
+            hud?.ShowMessage(0, $"The wet sand gives way... ({moundsDug}/{Needed})");
             return;
         }
 

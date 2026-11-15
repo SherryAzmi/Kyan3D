@@ -53,6 +53,22 @@ public class PlayerInputReader : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Which keyboard layout this player uses right now, depending on how many controllers are plugged in:
+    ///   0 controllers: the layouts set above (P1 WASD + mouse, P2 arrows), for testing.
+    ///   1 controller:  Player 1 uses the controller only, Player 2 uses the keyboard and mouse (WASD + mouse).
+    ///   2+ controllers: both players use their own controller; no keyboard.
+    /// </summary>
+    public KeyboardDebugLayout ActiveLayout => LayoutFor(gamepadIndex, keyboardDebug);
+
+    public static KeyboardDebugLayout LayoutFor(int playerIndex, KeyboardDebugLayout configured)
+    {
+        int pads = Gamepad.all.Count;
+        if (pads == 0) return configured;
+        if (pads == 1) return playerIndex == 0 ? KeyboardDebugLayout.None : KeyboardDebugLayout.WasdMouse;
+        return KeyboardDebugLayout.None;
+    }
+
     Gamepad lastPad;
 
     void Update()
@@ -63,9 +79,11 @@ public class PlayerInputReader : MonoBehaviour
         var pad = Pad;
         if (pad != lastPad) { OnPadChanged(pad); lastPad = pad; }
 
+        if (PauseMenu.IsPaused) return; // pause / settings / help panel is open: ignore the game controls
+
         if (pad != null) ReadPad(pad);
 
-        switch (keyboardDebug)
+        switch (ActiveLayout)
         {
             case KeyboardDebugLayout.WasdMouse: ReadWasdMouse(); break;
             case KeyboardDebugLayout.Arrows: ReadArrows(); break;

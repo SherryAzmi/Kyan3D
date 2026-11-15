@@ -34,11 +34,9 @@ public static class LetterWriter
     /// <summary>Switch a Text to the handwriting font (keeps the original if none is installed).</summary>
     public static void UseHandwriting(Text t, float sizeScale = 1.08f)
     {
-        if (!t || !Handwriting || t.font == Handwriting) return;
-        t.font = Handwriting;
-        t.fontStyle = FontStyle.Normal; // script fonts are already slanted
-        t.fontSize = Mathf.RoundToInt(t.fontSize * sizeScale);
-        t.lineSpacing = 1.05f;
+        // every text in the game now uses the Kayyan font, so the note keeps it (no handwriting font)
+        if (!t) return;
+        t.font = KUI.Body;
     }
 
     /// <summary>Write 'full' into 't' letter by letter. The Text should already be fully visible (alpha 1).</summary>

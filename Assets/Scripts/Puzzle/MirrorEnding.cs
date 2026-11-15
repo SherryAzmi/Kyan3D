@@ -69,6 +69,7 @@ public class MirrorEnding : MonoBehaviour
 
     void Awake()
     {
+        NotePanel.Replace(ref headerText, ref noteText, ref noteBackdrop); // the note sits on a paper panel
         if (endingCam) endingCam.enabled = false;
         if (wholeFig) wholeFig.SetActive(false);
         if (ModelReflection) reflectionRoot = reflectionPresent.transform.parent.gameObject;

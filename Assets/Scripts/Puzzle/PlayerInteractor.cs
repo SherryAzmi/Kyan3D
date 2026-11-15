@@ -73,7 +73,24 @@ public class PlayerInteractor : MonoBehaviour
         if (!holding && Time.time < tapFocusUntil) FocusPoint = tapFocusPoint;
         HasFocus = holding || Time.time < tapFocusUntil;
 
-        if (hud) hud.SetPrompt(hudSide, Format(prompt), progress);
+        // The text prompt now floats above the object as a button icon + short text (WorldPrompt);
+        // the HUD only keeps the hold bar.
+        if (hud) hud.SetPrompt(hudSide, null, progress);
+        if (prompt != null)
+        {
+            Vector3 at = Current ? PromptPoint(Current) : transform.position + Vector3.up * 2.7f;
+            WorldPrompt.Set(hudSide, at, prompt, input);
+        }
+    }
+
+    /// <summary>A point just above the object this player is looking at, where its prompt floats.</summary>
+    Vector3 PromptPoint(Interactable it)
+    {
+        Vector3 p = it.FocusPoint(transform.position);
+        float top = p.y;
+        var col = it.GetComponentInChildren<Collider>();
+        if (col) top = Mathf.Max(top, Mathf.Min(col.bounds.max.y, p.y + 6f));
+        return new Vector3(p.x, top + 0.7f, p.z);
     }
 
     Interactable FindBest()

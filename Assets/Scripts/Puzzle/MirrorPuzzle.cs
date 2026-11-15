@@ -158,7 +158,7 @@ public class MirrorPuzzle : MonoBehaviour
             if (m.seam) m.seam.SetActive(BothPlaced);
         }
         if (BothPlaced)
-            hud?.ShowBoth("Both halves are here. Hold Power together to make it whole.", 6f);
+            hud?.ShowBoth("Both halves are here. Hold R2 together to make it whole.", 6f);
         else
         {
             hud?.ShowMessage(world, "Your half is in place. The other half must come from the other world.", 5f);

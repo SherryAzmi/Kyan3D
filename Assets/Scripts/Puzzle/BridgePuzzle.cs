@@ -187,7 +187,7 @@ public class BridgePuzzle : MonoBehaviour
     public void OnSeedPlaced()
     {
         seedPlaced = true;
-        hud?.ShowMessage(1, "The seed takes root. Hold Power to make the roots grow!", 5f);
+        hud?.ShowMessage(1, "The seed takes root. Hold R2 to make the roots grow!", 5f);
         hud?.ShowMessage(0, "The ground trembles...", 3f);
     }
 

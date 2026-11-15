@@ -62,6 +62,9 @@ public class GameAudio : MonoBehaviour
     public float endingMinX = 450f;
 
     AudioSource musicSrc, ambLeftSrc, ambRightSrc;
+    // 0..1 fades for the music and the ambience (the Music / Sound effects settings are applied on top in LateUpdate)
+    float musicScale, ambScale;
+    float SfxVol => sfxVolume * GameSettings.Sfx;
     readonly List<AudioSource> oneShots = new List<AudioSource>();
     readonly Dictionary<string, AudioSource> holds = new Dictionary<string, AudioSource>();
     readonly Dictionary<string, float> holdSeen = new Dictionary<string, float>();
@@ -80,13 +83,16 @@ public class GameAudio : MonoBehaviour
         // Ease in under the scene fade.
         for (float t = 0f; t < 2.5f; t += Time.unscaledDeltaTime)
         {
-            float k = t / 2.5f;
-            musicSrc.volume = musicVolume * k;
-            ambLeftSrc.volume = ambRightSrc.volume = ambienceVolume * k;
+            musicScale = ambScale = t / 2.5f;
             yield return null;
         }
-        musicSrc.volume = musicVolume;
-        ambLeftSrc.volume = ambRightSrc.volume = ambienceVolume;
+        musicScale = ambScale = 1f;
+    }
+
+    void LateUpdate()
+    {
+        musicSrc.volume = musicVolume * GameSettings.Music * musicScale;
+        ambLeftSrc.volume = ambRightSrc.volume = ambienceVolume * GameSettings.Sfx * ambScale;
     }
 
     void OnDestroy()
@@ -130,7 +136,7 @@ public class GameAudio : MonoBehaviour
         if (!free) free = I.oneShots[0];
         free.clip = clip;
         free.panStereo = Pan(side);
-        free.volume = I.sfxVolume * volume;
+        free.volume = I.SfxVol * volume;
         free.pitch = pitch;
         free.Play();
     }
@@ -151,7 +157,7 @@ public class GameAudio : MonoBehaviour
         }
         if (!s.isPlaying) s.Play();
         s.pitch = pitch;
-        s.volume = Mathf.MoveTowards(s.volume, I.sfxVolume * volume, Time.unscaledDeltaTime * 4f);
+        s.volume = Mathf.MoveTowards(s.volume, I.SfxVol * volume, Time.unscaledDeltaTime * 4f);
         I.holdSeen[key] = Time.unscaledTime;
     }
 
@@ -164,12 +170,12 @@ public class GameAudio : MonoBehaviour
 
     IEnumerator CrossFade(AudioClip clip, float seconds, float ambienceTo)
     {
-        float m0 = musicSrc.volume, a0 = ambLeftSrc.volume;
+        float m0 = musicScale, a0 = ambScale;
         for (float t = 0f; t < seconds * 0.5f; t += Time.unscaledDeltaTime)
         {
             float k = t / (seconds * 0.5f);
-            musicSrc.volume = Mathf.Lerp(m0, 0f, k);
-            ambLeftSrc.volume = ambRightSrc.volume = Mathf.Lerp(a0, ambienceVolume * ambienceTo, k);
+            musicScale = Mathf.Lerp(m0, 0f, k);
+            ambScale = Mathf.Lerp(a0, ambienceTo, k);
             yield return null;
         }
         if (clip)
@@ -179,7 +185,7 @@ public class GameAudio : MonoBehaviour
         }
         for (float t = 0f; t < seconds * 0.5f; t += Time.unscaledDeltaTime)
         {
-            musicSrc.volume = Mathf.Lerp(0f, musicVolume * 1.3f, t / (seconds * 0.5f));
+            musicScale = Mathf.Lerp(0f, 1.3f, t / (seconds * 0.5f));
             yield return null;
         }
     }
